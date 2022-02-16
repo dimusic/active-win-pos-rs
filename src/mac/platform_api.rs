@@ -13,7 +13,7 @@ use core_foundation::{
 };
 use core_graphics::display::*;
 use std::{ffi::{ CStr, c_void }};
-use appkit_bindings::{NSWorkspace, INSWorkspace, INSRunningApplication};
+use appkit_nsworkspace_bindings::{NSWorkspace, INSWorkspace, INSRunningApplication};
 use crate::common::{window_position::WindowPosition, platform_api::PlatformApi};
 use super::core_graphics_patch::CGRectMakeWithDictionaryRepresentation;
 use super::window_position::FromCgRect;

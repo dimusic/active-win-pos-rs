@@ -20,7 +20,7 @@ fn get_sdk_path() -> Result<String, Error> {
 pub fn build() {
     let target = std::env::var("TARGET").unwrap();
     
-    let default_sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk";
+    let default_sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk";
 
     let sdk_path: String = match get_sdk_path() {
         Ok(path) => path,

@@ -1,5 +1,5 @@
 [package]
-name = "appkit-bindings"
+name = "appkit-nsworkspace-bindings"
 version = "0.1.0"
 edition = "2021"
 

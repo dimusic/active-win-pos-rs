@@ -6,7 +6,7 @@ version = 3
 name = "active-win-pos-rs"
 version = "0.1.0"
 dependencies = [
- "appkit-bindings",
+ "appkit-nsworkspace-bindings",
  "core-foundation",
  "core-graphics",
  "winapi",
@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "appkit-bindings"
+name = "appkit-nsworkspace-bindings"
 version = "0.1.0"
 dependencies = [
  "bindgen",
