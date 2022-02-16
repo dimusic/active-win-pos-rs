@@ -1,0 +1,21 @@
+[package]
+name = "active-win-pos-rs"
+version = "0.1.0"
+authors = ["Dmitry Malkov <dmitry.malkov@live.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [
+  "appkit-bindings",
+]
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-graphics = "0.22"
+core-foundation = "0.9"
+appkit-bindings = { path = "./appkit-bindings", version = "0.1.0" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3.9", features = ["winuser"] }
+winsafe = { version = "0.0.9" }
