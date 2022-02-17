@@ -30,8 +30,6 @@ fn get_foreground_window_position() -> Result<RECT, Error> {
         return Err(Error::last_os_error());
     }
     else {
-        println!("active_window: {:?}", active_window);
-    
         unsafe {
             let mut rect: RECT = std::mem::zeroed();
 
