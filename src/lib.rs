@@ -10,9 +10,15 @@ use mac::init_platform_api;
 use win::init_platform_api;
 
 pub use common::window_position::WindowPosition;
+pub use common::active_window::ActiveWindow;
 use common::platform_api::PlatformApi;
 
 pub fn get_position() -> Result<WindowPosition, ()> {
     let api = init_platform_api();
     api.get_position()
+}
+
+pub fn get_active_window() -> Result<ActiveWindow, ()> {
+    let api = init_platform_api();
+    api.get_active_window()
 }

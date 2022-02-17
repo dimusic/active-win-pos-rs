@@ -14,7 +14,7 @@ use core_foundation::{
 use core_graphics::display::*;
 use std::{ffi::{ CStr, c_void }};
 use appkit_nsworkspace_bindings::{NSWorkspace, INSWorkspace, INSRunningApplication};
-use crate::common::{window_position::WindowPosition, platform_api::PlatformApi};
+use crate::common::{window_position::WindowPosition, platform_api::PlatformApi, active_window::ActiveWindow};
 use super::core_graphics_patch::CGRectMakeWithDictionaryRepresentation;
 use super::window_position::FromCgRect;
 
@@ -61,6 +61,48 @@ impl PlatformApi for MacPlatformApi {
 
                 if let DictEntryValue::_Rect(window_bounds) = get_from_dict(dic_ref, "kCGWindowBounds") {
                     return Ok(window_bounds);
+                }
+            }
+        }
+
+        unsafe {
+            CFRelease(window_list_info as CFTypeRef)
+        }
+
+        return Err(());
+    }
+
+    fn get_active_window(&self) -> Result<ActiveWindow, ()> {
+        let position = self.get_position()?;
+        
+        const OPTIONS: CGWindowListOption = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
+        let window_list_info = unsafe { CGWindowListCopyWindowInfo(OPTIONS, kCGNullWindowID) };
+        
+        let count: isize = unsafe { CFArrayGetCount(window_list_info) };
+
+        let active_window_pid = unsafe {
+            let workspace = NSWorkspace::sharedWorkspace();
+            let active_app = workspace.frontmostApplication();
+            active_app.processIdentifier() as i64
+        };
+        
+        for i in 0..count-1 {
+            let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
+
+            let window_pid = get_from_dict(dic_ref, "kCGWindowOwnerPID");
+
+            if let DictEntryValue::_Number(win_pid) = window_pid {
+                if win_pid != active_window_pid {
+                    continue;
+                }
+
+                if let DictEntryValue::_Number(window_id) = get_from_dict(dic_ref, "kCGWindowNumber") {
+                    let active_window = ActiveWindow {
+                        window_id: window_id.to_string(),
+                        position
+                    };
+
+                    return Ok(active_window)
                 }
             }
         }
