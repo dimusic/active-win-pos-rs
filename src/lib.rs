@@ -9,7 +9,8 @@ use mac::init_platform_api;
 #[cfg(target_os = "windows")]
 use win::init_platform_api;
 
-use common::{window_position::WindowPosition, platform_api::PlatformApi};
+pub use common::window_position::WindowPosition;
+use common::platform_api::PlatformApi;
 
 pub fn get_position() -> Result<WindowPosition, ()> {
     let api = init_platform_api();
