@@ -38,6 +38,14 @@ pub struct MacPlatformApi {
 
 impl PlatformApi for MacPlatformApi {
     fn get_position(&self) -> Result<WindowPosition, ()> {
+        if let Ok(active_window) = self.get_active_window() {
+            return Ok(active_window.position);
+        }
+
+        return Err(());
+    }
+
+    fn get_active_window(&self) -> Result<ActiveWindow, ()> {
         const OPTIONS: CGWindowListOption = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
         let window_list_info = unsafe { CGWindowListCopyWindowInfo(OPTIONS, kCGNullWindowID) };
         
@@ -48,6 +56,8 @@ impl PlatformApi for MacPlatformApi {
             let active_app = workspace.frontmostApplication();
             active_app.processIdentifier() as i64
         };
+
+        let mut win_pos = WindowPosition::new(0., 0., 0., 0.);
         
         for i in 0..count-1 {
             let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
@@ -60,46 +70,18 @@ impl PlatformApi for MacPlatformApi {
                 }
 
                 if let DictEntryValue::_Rect(window_bounds) = get_from_dict(dic_ref, "kCGWindowBounds") {
-                    return Ok(window_bounds);
-                }
-            }
-        }
+                    if window_bounds.width < 50. || window_bounds.height < 50. {
+                        continue;
+                    }
 
-        unsafe {
-            CFRelease(window_list_info as CFTypeRef)
-        }
-
-        return Err(());
-    }
-
-    fn get_active_window(&self) -> Result<ActiveWindow, ()> {
-        let position = self.get_position()?;
-        
-        const OPTIONS: CGWindowListOption = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
-        let window_list_info = unsafe { CGWindowListCopyWindowInfo(OPTIONS, kCGNullWindowID) };
-        
-        let count: isize = unsafe { CFArrayGetCount(window_list_info) };
-
-        let active_window_pid = unsafe {
-            let workspace = NSWorkspace::sharedWorkspace();
-            let active_app = workspace.frontmostApplication();
-            active_app.processIdentifier() as i64
-        };
-        
-        for i in 0..count-1 {
-            let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
-
-            let window_pid = get_from_dict(dic_ref, "kCGWindowOwnerPID");
-
-            if let DictEntryValue::_Number(win_pid) = window_pid {
-                if win_pid != active_window_pid {
-                    continue;
+                    win_pos = window_bounds;
                 }
 
                 if let DictEntryValue::_Number(window_id) = get_from_dict(dic_ref, "kCGWindowNumber") {
                     let active_window = ActiveWindow {
                         window_id: window_id.to_string(),
-                        position
+                        process_id: active_window_pid,
+                        position: win_pos
                     };
 
                     return Ok(active_window)
