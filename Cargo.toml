@@ -20,4 +20,3 @@ appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings", version 
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3.9", features = ["winuser"] }
-winsafe = { version = "0.0.9" }
