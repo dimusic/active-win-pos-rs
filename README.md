@@ -7,7 +7,7 @@ A small Rust library that let's you get position and size of the active window o
 ### Add to Cargo.toml:
 ```toml
 [dependencies]
-active-win-pos-rs = "0.2.0"
+active-win-pos-rs = "0.3.0"
 ```
 
 ### Use:
