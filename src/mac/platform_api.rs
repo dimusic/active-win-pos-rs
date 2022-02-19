@@ -80,7 +80,7 @@ impl PlatformApi for MacPlatformApi {
                 if let DictEntryValue::_Number(window_id) = get_from_dict(dic_ref, "kCGWindowNumber") {
                     let active_window = ActiveWindow {
                         window_id: window_id.to_string(),
-                        process_id: active_window_pid,
+                        process_id: active_window_pid as u64,
                         position: win_pos
                     };
 
