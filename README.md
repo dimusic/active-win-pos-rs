@@ -2,6 +2,30 @@
 
 A small Rust library that let's you get position and size of the active window on Windows and MacOS
 
+## Usage
+
+Add to Cargo.toml:
+```toml
+[dependencies]
+active-win-pos-rs = "0.2.0"
+```
+
+Use:
+```rust
+use active_win_pos_rs::get_position;
+
+fn main() {
+    match get_position() {
+        Ok(window_position) => {
+            println!("window position: {:?}", window_position);
+        },
+        Err(()) => {
+            println!("error occurred while getting window position");
+        }
+    }
+}
+```
+
 ## Build
 
 ```sh
