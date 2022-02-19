@@ -25,7 +25,7 @@ fn main() {
     }
 }
 ```
-Would give you a ```ActiveWindow``` struct with unique window id, process id and window position.
+Would give you an instance of ```ActiveWindow``` struct with unique window id, process id and window position.
 
 Or use ``` active_win_pos_rs::get_position ``` to get the ```WindowPosition``` only.
 
