@@ -4,27 +4,30 @@ A small Rust library that let's you get position and size of the active window o
 
 ## Usage
 
-Add to Cargo.toml:
+### Add to Cargo.toml:
 ```toml
 [dependencies]
 active-win-pos-rs = "0.2.0"
 ```
 
-Use:
+### Use:
 ```rust
-use active_win_pos_rs::get_position;
+use active_win_pos_rs::get_active_window;
 
 fn main() {
-    match get_position() {
-        Ok(window_position) => {
-            println!("window position: {:?}", window_position);
+    match get_active_window() {
+        Ok(active_window) => {
+            println!("active window: {:?}", active_window);
         },
         Err(()) => {
-            println!("error occurred while getting window position");
+            println!("error occurred while getting the active window");
         }
     }
 }
 ```
+Would give you a ```ActiveWindow``` struct with unique window id, process id and window position.
+
+Or use ``` active_win_pos_rs::get_position ``` to get the ```WindowPosition``` only.
 
 ## Build
 
@@ -36,9 +39,9 @@ fn main() {
 
 ## Example
 ```sh
-% cargo run --example simple
+% cargo run --example active-window
 ```
 Output:
 ```
-% window position: WindowPosition { x: 733.0, y: 353.0, width: 815.0, height: 583.0 }
+% active window: ActiveWindow { window_id: "5704", process_id: 80726, position: WindowPosition { x: 798.0, y: 193.0, width: 815.0, height: 606.0 } }
 ```

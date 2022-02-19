@@ -6,7 +6,7 @@ fn main() {
             println!("active window: {:?}", active_window);
         },
         Err(()) => {
-            println!("error occurred while getting window position");
+            println!("error occurred while getting the active window");
         }
     }
 }
