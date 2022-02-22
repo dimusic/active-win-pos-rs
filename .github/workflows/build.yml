@@ -11,14 +11,28 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build_windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/cache@v1
-      with:
-        path: ${{ github.workspace }}/target
-        key: windows-rust-target-directory
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+  
+  build_macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+  
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Build
       run: cargo build --verbose
     - name: Run tests
