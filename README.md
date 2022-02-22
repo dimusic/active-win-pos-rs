@@ -1,6 +1,6 @@
 # active-win-pos-rs
 
-A small Rust library that let's you get position and size of the active window on Windows and MacOS
+A small Rust library that let's you get position and size of the active window on Windows, MacOS and Linux
 
 ## Usage
 
