@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - run: |
+        sudo apt-get install libxcb-ewmh-dev libxcb-randr0
     - name: Build
       run: cargo build --verbose
     - name: Run tests
