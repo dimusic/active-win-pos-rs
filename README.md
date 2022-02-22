@@ -2,7 +2,7 @@
 
 ![Build status](https://github.com/dimusic/active-win-pos-rs/actions/workflows/build.yml/badge.svg)
 
-A small Rust library that let's you get position and size of the active window on Windows, MacOS and Linux
+A small Rust library that lets you get position and size of the active window on Windows, MacOS and Linux
 
 ## Usage
 
