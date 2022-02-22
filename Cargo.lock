@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "active-win-pos-rs"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "appkit-nsworkspace-bindings",
  "core-foundation",
