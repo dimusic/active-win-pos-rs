@@ -1,4 +1,5 @@
-use crate::{common::platform_api::PlatformApi, WindowPosition, ActiveWindow, active_window_error::ActiveWindowError};
+use crate::{common::platform_api::PlatformApi, WindowPosition, ActiveWindow};
+use crate::common::active_window_error::ActiveWindowError;
 
 use xcb::{get_geometry, translate_coordinates};
 use xcb_util::ewmh::{Connection, get_active_window as xcb_get_active_window, get_wm_pid};
