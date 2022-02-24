@@ -14,7 +14,7 @@ use core_foundation::{
 use core_graphics::display::*;
 use std::{ffi::{ CStr, c_void }};
 use appkit_nsworkspace_bindings::{NSWorkspace, INSWorkspace, INSRunningApplication};
-use crate::common::{window_position::WindowPosition, platform_api::PlatformApi, active_window::ActiveWindow};
+use crate::common::{window_position::WindowPosition, platform_api::PlatformApi, active_window::ActiveWindow, active_window_error::ActiveWindowError};
 use super::core_graphics_patch::CGRectMakeWithDictionaryRepresentation;
 use super::window_position::FromCgRect;
 
@@ -37,15 +37,15 @@ pub struct MacPlatformApi {
 }
 
 impl PlatformApi for MacPlatformApi {
-    fn get_position(&self) -> Result<WindowPosition, ()> {
+    fn get_position(&self) -> Result<WindowPosition, ActiveWindowError> {
         if let Ok(active_window) = self.get_active_window() {
             return Ok(active_window.position);
         }
 
-        return Err(());
+        return Err(ActiveWindowError::GetActiveWindowFailed);
     }
 
-    fn get_active_window(&self) -> Result<ActiveWindow, ()> {
+    fn get_active_window(&self) -> Result<ActiveWindow, ActiveWindowError> {
         const OPTIONS: CGWindowListOption = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
         let window_list_info = unsafe { CGWindowListCopyWindowInfo(OPTIONS, kCGNullWindowID) };
         
@@ -93,7 +93,7 @@ impl PlatformApi for MacPlatformApi {
             CFRelease(window_list_info as CFTypeRef)
         }
 
-        return Err(());
+        return Err(ActiveWindowError::GetActiveWindowFailed);
     }
 }
 

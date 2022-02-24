@@ -5,8 +5,8 @@ fn main() {
         Ok(window_position) => {
             println!("window position: {:?}", window_position);
         },
-        Err(()) => {
-            println!("error occurred while getting window position");
+        Err(err) => {
+            eprintln!("Error {}", err);
         }
     }
 }

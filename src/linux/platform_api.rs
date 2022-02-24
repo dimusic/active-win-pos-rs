@@ -1,4 +1,4 @@
-use crate::{common::platform_api::PlatformApi, WindowPosition, ActiveWindow};
+use crate::{common::platform_api::PlatformApi, WindowPosition, ActiveWindow, active_window_error::ActiveWindowError};
 
 use xcb::{get_geometry, translate_coordinates};
 use xcb_util::ewmh::{Connection, get_active_window as xcb_get_active_window, get_wm_pid};
@@ -8,27 +8,27 @@ pub struct LinuxPlatformApi {
 }
 
 impl PlatformApi for LinuxPlatformApi {
-    fn get_position(&self) -> Result<WindowPosition, ()> {
+    fn get_position(&self) -> Result<WindowPosition, ActiveWindowError> {
         let active_winow = self.get_active_window()?;
         Ok(active_winow.position)
     }
 
-    fn get_active_window(&self) -> Result<ActiveWindow, ()> {
+    fn get_active_window(&self) -> Result<ActiveWindow, ActiveWindowError> {
         let (xcb_connection, default_screen) = xcb::Connection::connect(None)
-            .map_err(|_| ())?;
+            .map_err(|_| ActiveWindowError::GetActiveWindowFailed)?;
         let xcb_connection = xcb_util::ewmh::Connection::connect(xcb_connection)
-            .map_err(|(_a, _b)| ())?;
+            .map_err(|(_a, _b)| ActiveWindowError::GetActiveWindowFailed)?;
         
         let xcb_active_window = xcb_get_active_window(&xcb_connection, default_screen)
             .get_reply()
-            .map_err(|_| ())?;
+            .map_err(|_| ActiveWindowError::GetActiveWindowFailed)?;
         
         let window_position = get_xcb_window_position(&xcb_connection, xcb_active_window)
-            .map_err(|_| ())?;
+            .map_err(|_| ActiveWindowError::GetActiveWindowFailed)?;
         
         let window_pid  = get_wm_pid(&xcb_connection, xcb_active_window)
             .get_reply()
-            .map_err(|_| ())?;
+            .map_err(|_| ActiveWindowError::GetActiveWindowFailed)?;
         
         Ok(ActiveWindow {
             process_id: window_pid as u64,
