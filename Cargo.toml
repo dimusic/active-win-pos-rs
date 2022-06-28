@@ -16,11 +16,11 @@ members = [
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.22"
 core-foundation = "0.9"
-appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings", version = "0.1.0" }
+appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3.9", features = ["winuser"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-xcb = { version = "0.10.1", features = [ "randr" ] }
+xcb = { version = "1.1.1", features = [ "randr" ] }
 xcb-util = { version = "0.4.0", features = [ "ewmh" ] }
