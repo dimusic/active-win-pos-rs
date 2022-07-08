@@ -1,8 +1,35 @@
-use xcb::x;
+use xcb::{x, Xid};
 
 use crate::{common::platform_api::PlatformApi, WindowPosition, ActiveWindow};
-// use xcb::x::GetGeo // {get_geometry, translate_coordinates};
-// use xcb_util::ewmh::{get_active_window as xcb_get_active_window, get_wm_pid};
+
+fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<u32> {
+    let window_pid = conn.send_request(&x::InternAtom {
+        only_if_exists: true,
+        name: b"_NET_WM_PID",
+    });
+    let window_pid = conn.wait_for_reply(window_pid)?.atom();
+
+    let window_pid = conn.send_request(&x::GetProperty {
+        delete: false,
+        window,
+        property: window_pid,
+        r#type: x::ATOM_ANY,
+        long_offset: 0,
+        long_length: 1,
+    });
+    let window_pid = conn.wait_for_reply(window_pid)?;
+
+    Ok(window_pid.value::<u32>().get(0).unwrap_or(&0).to_owned())
+}
+
+fn get_xcb_active_window_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
+    let active_window_id = conn.send_request(&x::InternAtom {
+        only_if_exists: true,
+        name: b"_NET_ACTIVE_WINDOW",
+    });
+    
+    Ok(conn.wait_for_reply(active_window_id)?.atom())
+}
 
 pub struct LinuxPlatformApi {
 
@@ -15,108 +42,60 @@ impl PlatformApi for LinuxPlatformApi {
     }
 
     fn get_active_window(&self) -> Result<ActiveWindow, ()> {
-        let (conn, sceen_num) = xcb::Connection::connect(None)
+        let (conn, _) = xcb::Connection::connect(None)
             .map_err(|_| ())?;
         let setup = conn.get_setup();
 
-        let active_window_id = conn.send_request(&x::InternAtom {
-            only_if_exists: true,
-            name: b"_NET_ACTIVE_WINDOW",
-        });
-        let active_window_id = conn.wait_for_reply(active_window_id)
-            .map_err(|_| ())?.atom();
-        
-        assert!(active_window_id != x::ATOM_NONE, "EWMH not supported");
+        let xcb_active_window_atom = get_xcb_active_window_atom(&conn)
+            .map_err(|_| ())?;
+        if xcb_active_window_atom == x::ATOM_NONE {
+            // EWMH not supported
+            return Err(());
+        }
 
-        let root_window = setup.roots().next().unwrap().root();
+        let root_window = setup.roots().next();
+        if root_window.is_none() {
+            return Err(());
+        }
+        let root_window = root_window.unwrap().root();
+        
         let active_window = conn.send_request(&x::GetProperty {
             delete: false,
             window: root_window,
-            // property: x::ATOM_WINDOW,
-            property: active_window_id,
-            // r#type: x::ATOM_CARDINAL,
+            property: xcb_active_window_atom,
             r#type: x::ATOM_WINDOW,
             long_offset: 0,
-            long_length: 32,
+            long_length: 1,
         });
-        let active_window = conn.wait_for_reply(active_window).map_err(|_| ())?;
-
-        let window_obj = active_window.value::<x::Window>();
-        println!("window_obj getProperty: {:?}", window_obj);
-        
-        
+        let active_window = conn.wait_for_reply(active_window)
+            .map_err(|_| ())?;
+        let active_window =  active_window.value::<x::Window>().get(0);
+        if active_window.is_none() {
+            return Err(());
+        }
+        let active_window = active_window.unwrap();
+        println!("active_window: {:?}", active_window);
 
         let win_geometry = conn.send_request(&x::GetGeometry {
-            drawable: x::Drawable::Window(*window_obj.get(0).unwrap()),
+            drawable: x::Drawable::Window(*active_window),
         });
         let win_geometry = conn.wait_for_reply(win_geometry)
             .map_err(|_| ())?;
 
-        println!("window_geometry: {:?}", win_geometry);
+        println!("geom: {:#?}", win_geometry);
 
-        
-
-        let window_pid: u64 = 1;
-        let window_id: String = String::from("123");
+        let window_pid: u32 = get_xcb_window_pid(&conn, *active_window).map_err(|_| ())?;
         let position = WindowPosition {
-            height: 0.,
-            width: 0.,
-            x: 0.,
-            y: 0.,
+            height: win_geometry.height().try_into().unwrap(),
+            width: win_geometry.width().try_into().unwrap(),
+            x: win_geometry.x().try_into().unwrap(),
+            y: win_geometry.y().try_into().unwrap(),
         };
-
-        get_xcb_window_position(&conn, 0);
-
-        // let (xcb_connection, default_screen) = xcb::Connection::connect(None)
-        //     .map_err(|_| ())?;
-        // let xcb_connection = xcb_util::ewmh::Connection::connect(xcb_connection)
-        //     .map_err(|(_a, _b)| ())?;
-        
-        // let xcb_active_window = xcb_get_active_window(&xcb_connection, default_screen)
-        //     .get_reply()
-        //     .map_err(|_| ())?;
-        
-        // let window_position = get_xcb_window_position(&xcb_connection, xcb_active_window)
-        //     .map_err(|_| ())?;
-        
-        // let window_pid  = get_wm_pid(&xcb_connection, xcb_active_window)
-        //     .get_reply()
-        //     .map_err(|_| ())?;
         
         Ok(ActiveWindow {
-            process_id: window_pid,
-            window_id: window_id,
-            position: position
+            process_id: window_pid.try_into().unwrap(),
+            window_id: active_window.resource_id().to_string(),
+            position,
         })
-
-        // Ok(ActiveWindow {
-        //     process_id: window_pid as u64,
-        //     window_id: xcb_active_window.to_string(),
-        //     position: window_position
-        // })
     }
 }
-
-fn get_xcb_window_position(xcb_connection: &xcb::Connection, xcb_window: u32) {
-    println!("test");
-}
-
-// fn get_xcb_window_position(xcb_connection: &Connection, xcb_window: u32) -> Result<WindowPosition, Box<dyn std::error::Error>> {
-//     let xcb_window_geometry = get_geometry(&xcb_connection, xcb_window)
-//         .get_reply()?;
-
-//     let xcb_coordinates = translate_coordinates(
-//         &xcb_connection,
-//         xcb_window,
-//         xcb_window_geometry.root(),
-//         xcb_window_geometry.x(),
-//         xcb_window_geometry.y()
-//     ).get_reply()?;
-
-//     Ok(WindowPosition::new(
-//         xcb_coordinates.dst_x() as f64,
-//         xcb_coordinates.dst_y() as f64,
-//         xcb_window_geometry.width() as f64,
-//         xcb_window_geometry.height() as f64
-//     ))
-// }
