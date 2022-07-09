@@ -22,5 +22,4 @@ appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings" }
 winapi = { version = "0.3.9", features = ["winuser"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-xcb = { version = "1.1.1", features = [ "randr", "debug_atom_names" ] }
-xcb-util = { version = "0.4.0", features = [ "ewmh" ] }
+xcb = { version = "1.1.1", features = [ "randr" ] }
