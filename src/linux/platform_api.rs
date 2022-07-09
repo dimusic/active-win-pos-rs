@@ -31,6 +31,28 @@ fn get_xcb_active_window_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
     Ok(conn.wait_for_reply(active_window_id)?.atom())
 }
 
+fn get_xcb_translated_position(conn: &xcb::Connection, active_window: x::Window) -> xcb::Result<WindowPosition> {
+    let window_geometry = conn.send_request(&x::GetGeometry {
+        drawable: x::Drawable::Window(active_window),
+    });
+    let window_geometry = conn.wait_for_reply(window_geometry)?;
+
+    let translated_position = conn.send_request(&x::TranslateCoordinates {
+        dst_window: window_geometry.root(),
+        src_window: active_window,
+        src_x: window_geometry.x(),
+        src_y: window_geometry.y(),
+    });
+    let translated_position = conn.wait_for_reply(translated_position)?;
+
+    Ok(WindowPosition {
+        x: translated_position.dst_x().try_into().unwrap(),
+        y: translated_position.dst_y().try_into().unwrap(),
+        width: window_geometry.width().try_into().unwrap(),
+        height: window_geometry.height().try_into().unwrap(),
+    })
+}
+
 pub struct LinuxPlatformApi {
 
 }
@@ -74,23 +96,11 @@ impl PlatformApi for LinuxPlatformApi {
             return Err(());
         }
         let active_window = active_window.unwrap();
-        println!("active_window: {:?}", active_window);
 
-        let win_geometry = conn.send_request(&x::GetGeometry {
-            drawable: x::Drawable::Window(*active_window),
-        });
-        let win_geometry = conn.wait_for_reply(win_geometry)
+        let window_pid: u32 = get_xcb_window_pid(&conn, *active_window)
             .map_err(|_| ())?;
-
-        println!("geom: {:#?}", win_geometry);
-
-        let window_pid: u32 = get_xcb_window_pid(&conn, *active_window).map_err(|_| ())?;
-        let position = WindowPosition {
-            height: win_geometry.height().try_into().unwrap(),
-            width: win_geometry.width().try_into().unwrap(),
-            x: win_geometry.x().try_into().unwrap(),
-            y: win_geometry.y().try_into().unwrap(),
-        };
+        let position = get_xcb_translated_position(&conn, *active_window)
+            .map_err(|_| ())?;
         
         Ok(ActiveWindow {
             process_id: window_pid.try_into().unwrap(),
