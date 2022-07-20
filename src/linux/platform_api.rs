@@ -106,6 +106,7 @@ impl PlatformApi for LinuxPlatformApi {
             process_id: window_pid.try_into().unwrap(),
             window_id: active_window.resource_id().to_string(),
             position,
+            title: String::from(""),
         })
     }
 }

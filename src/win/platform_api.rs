@@ -4,7 +4,7 @@ use winapi::shared::windef::HWND__;
 use winapi::um::winuser::{GetWindowThreadProcessId};
 use winapi::{
     shared::windef::{ RECT },
-    um::{winuser::{ GetForegroundWindow, GetWindowRect }}
+    um::winuser::{GetForegroundWindow, GetWindowRect, GetWindowTextW},
 };
 use super::window_position::FromWinRect;
 
@@ -26,13 +26,14 @@ impl PlatformApi for WindowsPlatformApi {
     fn get_active_window(&self) -> Result<ActiveWindow, ()> {
         let active_window = get_foreground_window()?;
         let active_window_position = self.get_position()?;
-
+        let active_window_title = get_window_title(active_window)?;
         let lpdw_process_id = unsafe {
             let pid_ptr: *mut u32 = std::mem::zeroed();
             GetWindowThreadProcessId(active_window, pid_ptr)
         };
 
         let active_window = ActiveWindow {
+            title: active_window_title,
             position: active_window_position,
             process_id: lpdw_process_id as u64,
             window_id: format!("{:?}", active_window),
@@ -40,6 +41,19 @@ impl PlatformApi for WindowsPlatformApi {
 
         Ok(active_window)
     }
+}
+
+fn get_window_title(hwnd: *mut HWND__) -> Result<String, ()> {
+    let title: String;
+    unsafe {
+        let mut v: [u16; 255] = std::mem::zeroed();
+        let title_len = GetWindowTextW(hwnd, v.as_mut_ptr(), 255) as usize;
+        if title_len == 0 {
+            return Err(());
+        }
+        title = String::from_utf16_lossy(&v[0..title_len]);
+    };
+    Ok(title)
 }
 
 fn get_foreground_window() -> Result<*mut HWND__, ()> {
