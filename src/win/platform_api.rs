@@ -25,7 +25,8 @@ impl PlatformApi for WindowsPlatformApi {
 
     fn get_active_window(&self) -> Result<ActiveWindow, ()> {
         let active_window = get_foreground_window()?;
-        let active_window_position = self.get_position()?;
+        let win_position = get_foreground_window_position(active_window)?;
+        let active_window_position = WindowPosition::from_win_rect(&win_position);
         let active_window_title = get_window_title(active_window)?;
         let lpdw_process_id = unsafe {
             let pid_ptr: *mut u32 = std::mem::zeroed();
