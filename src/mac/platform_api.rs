@@ -58,6 +58,7 @@ impl PlatformApi for MacPlatformApi {
         };
 
         let mut win_pos = WindowPosition::new(0., 0., 0., 0.);
+        let mut win_title = String::from("");
         
         for i in 0..count-1 {
             let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
@@ -77,12 +78,16 @@ impl PlatformApi for MacPlatformApi {
                     win_pos = window_bounds;
                 }
 
+                if let DictEntryValue::_String(window_name) = get_from_dict(dic_ref, "kCGWindowName") {
+                    win_title = window_name;
+                }
+
                 if let DictEntryValue::_Number(window_id) = get_from_dict(dic_ref, "kCGWindowNumber") {
                     let active_window = ActiveWindow {
                         window_id: window_id.to_string(),
                         process_id: active_window_pid as u64,
                         position: win_pos,
-                        title: String::from(""),
+                        title: win_title,
                     };
 
                     return Ok(active_window)
@@ -103,7 +108,7 @@ impl PlatformApi for MacPlatformApi {
 fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
     let cf_key: CFString = key.into();
     let mut value: *const c_void = std::ptr::null();
-    if unsafe { CFDictionaryGetValueIfPresent(dict, cf_key.to_void(), &mut value) != 0 } {
+    if unsafe { CFDictionaryGetValueIfPresent(dict, cf_key.to_void(), &mut value) } != 0 {
         let type_id: CFTypeID = unsafe { CFGetTypeID(value) };
         if type_id == unsafe { CFNumberGetTypeID() } {
             let value = value as CFNumberRef;
@@ -134,12 +139,24 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
             return DictEntryValue::_Bool(unsafe { CFBooleanGetValue(value.cast()) });
         } else if type_id == unsafe { CFStringGetTypeID() } {
             let c_ptr = unsafe { CFStringGetCStringPtr(value.cast(), kCFStringEncodingUTF8) };
+            
             return if !c_ptr.is_null() {
                 let c_result = unsafe { CStr::from_ptr(c_ptr) };
                 let result = String::from(c_result.to_str().unwrap());
+                
                 DictEntryValue::_String(result)
             } else {
-                DictEntryValue::_Unknown
+                // in this case there is a high chance we got a `NSString` instead of `CFString`
+                // we have to use the objc runtime to fetch it
+                use objc_foundation::{INSString, NSString};
+                use objc_id::Id;
+                let nss: Id<NSString> = unsafe { Id::from_ptr(value as *mut NSString) };
+                let str = std::str::from_utf8(nss.as_str().as_bytes());
+
+                match str {
+                    Ok(s) => DictEntryValue::_String(s.to_owned()),
+                    Err(_) => DictEntryValue::_Unknown,
+                }
             };
         } else if type_id == unsafe { CFDictionaryGetTypeID() } && key == "kCGWindowBounds" {
             let rect: CGRect = unsafe {
