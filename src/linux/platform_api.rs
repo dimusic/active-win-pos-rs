@@ -22,6 +22,21 @@ fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<
     Ok(window_pid.value::<u32>().get(0).unwrap_or(&0).to_owned())
 }
 
+fn get_xcb_window_title(conn: &xcb::Connection, window: x::Window) -> xcb::Result<String> {
+    let window_title = conn.send_request(&x::GetProperty {
+        delete: false,
+        window,
+        property: x::ATOM_WM_NAME,
+        r#type: x::ATOM_ANY,
+        long_offset: 0,
+        long_length: 1024,
+    });
+    let window_title = conn.wait_for_reply(window_title)?;
+    let window_title = window_title.value();
+    let window_title = std::str::from_utf8(window_title);
+    Ok(window_title.unwrap_or("").to_owned())
+}
+
 fn get_xcb_active_window_atom(conn: &xcb::Connection) -> xcb::Result<x::Atom> {
     let active_window_id = conn.send_request(&x::InternAtom {
         only_if_exists: true,
@@ -101,12 +116,14 @@ impl PlatformApi for LinuxPlatformApi {
             .map_err(|_| ())?;
         let position = get_xcb_translated_position(&conn, *active_window)
             .map_err(|_| ())?;
+        let title = get_xcb_window_title(&conn, *active_window)
+            .map_err(|_| ())?;
         
         Ok(ActiveWindow {
             process_id: window_pid.try_into().unwrap(),
             window_id: active_window.resource_id().to_string(),
             position,
-            title: String::from(""),
+            title,
         })
     }
 }
