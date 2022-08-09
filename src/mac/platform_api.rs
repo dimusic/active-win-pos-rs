@@ -82,6 +82,13 @@ impl PlatformApi for MacPlatformApi {
                     win_title = window_name;
                 }
 
+                if win_title.is_empty() {
+                    // Get the application's name if the window name wasn't set (common case in Quartz)
+                    if let DictEntryValue::_String(application_name) = get_from_dict(dic_ref, "kCGWindowOwnerName") {
+                        win_title = application_name;
+                    }
+                }
+
                 if let DictEntryValue::_Number(window_id) = get_from_dict(dic_ref, "kCGWindowNumber") {
                     let active_window = ActiveWindow {
                         window_id: window_id.to_string(),
