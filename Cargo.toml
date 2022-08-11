@@ -16,8 +16,7 @@ members = [
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = "0.22"
 core-foundation = "0.9"
-objc-foundation = "0.1.1"
-objc_id = "0.1.1"
+objc = "0.2.7"
 appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings", version = "0.1.0" }
 
 [target.'cfg(target_os = "windows")'.dependencies]

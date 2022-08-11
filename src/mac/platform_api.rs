@@ -1,6 +1,6 @@
 use core_foundation::{
     string::{
-        CFString, kCFStringEncodingUTF8, CFStringGetCStringPtr, CFStringGetTypeID
+        CFString, CFStringGetTypeID
     },
     base::{
         ToVoid, CFGetTypeID
@@ -12,7 +12,8 @@ use core_foundation::{
     boolean::CFBooleanGetTypeID, dictionary::CFDictionaryGetTypeID,
 };
 use core_graphics::display::*;
-use std::{ffi::{ CStr, c_void }};
+use objc::runtime::Object;
+use std::{ffi::c_void};
 use appkit_nsworkspace_bindings::{NSWorkspace, INSWorkspace, INSRunningApplication};
 use crate::common::{window_position::WindowPosition, platform_api::PlatformApi, active_window::ActiveWindow};
 use super::core_graphics_patch::CGRectMakeWithDictionaryRepresentation;
@@ -142,26 +143,8 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
         } else if type_id == unsafe { CFBooleanGetTypeID() } {
             return DictEntryValue::_Bool(unsafe { CFBooleanGetValue(value.cast()) });
         } else if type_id == unsafe { CFStringGetTypeID() } {
-            let c_ptr = unsafe { CFStringGetCStringPtr(value.cast(), kCFStringEncodingUTF8) };
-            
-            return if !c_ptr.is_null() {
-                let c_result = unsafe { CStr::from_ptr(c_ptr) };
-                let result = String::from(c_result.to_str().unwrap());
-                
-                DictEntryValue::_String(result)
-            } else {
-                // in this case there is a high chance we got a `NSString` instead of `CFString`
-                // we have to use the objc runtime to fetch it
-                use objc_foundation::{INSString, NSString};
-                use objc_id::Id;
-                let nss: Id<NSString> = unsafe { Id::from_ptr(value as *mut NSString) };
-                let str = std::str::from_utf8(nss.as_str().as_bytes());
-
-                match str {
-                    Ok(s) => DictEntryValue::_String(s.to_owned()),
-                    Err(_) => DictEntryValue::_Unknown,
-                }
-            };
+            let str = nsstring_to_rust_string(value as *mut Object);
+            return DictEntryValue::_String(str);
         } else if type_id == unsafe { CFDictionaryGetTypeID() } && key == "kCGWindowBounds" {
             let rect: CGRect = unsafe {
                 let mut rect = std::mem::zeroed();
@@ -176,4 +159,17 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
     }
 
     DictEntryValue::_Unknown
+}
+
+pub fn nsstring_to_rust_string(nsstring: *mut Object) -> String {
+    unsafe {
+        let cstr: *const i8 = msg_send![nsstring, UTF8String];
+        if cstr != std::ptr::null() {
+            std::ffi::CStr::from_ptr(cstr)
+                .to_string_lossy()
+                .into_owned()
+        } else {
+            "".into()
+        }
+    }
 }
