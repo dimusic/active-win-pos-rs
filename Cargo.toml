@@ -4,8 +4,8 @@ version = "0.5.0"
 authors = ["Dmitry Malkov <dmitry.malkov@live.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
-keywords = ["window", "active", "current", "position"]
-description = "Get position and size of the active window on Windows, MacOS and Linux"
+keywords = ["window", "active", "current", "position", "title"]
+description = "Get position, size, title and a few other properties of the active window on Windows, MacOS and Linux"
 repository = "https://github.com/dimusic/active-win-pos-rs"
 
 [workspace]

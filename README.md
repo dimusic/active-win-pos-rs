@@ -2,7 +2,7 @@
 
 ![Build status](https://github.com/dimusic/active-win-pos-rs/actions/workflows/build.yml/badge.svg)
 
-A small Rust library that lets you get position and size of the active window on Windows, MacOS and Linux
+A small Rust library that lets you get position, size, title and a few other properties of the active window on Windows, MacOS and Linux
 
 ## Usage
 
@@ -27,7 +27,7 @@ fn main() {
     }
 }
 ```
-Would give you an instance of ```ActiveWindow``` struct with unique window id, process id and window position.
+Would give you an instance of ```ActiveWindow``` struct with unique window id, process id, window position and window title.
 
 Or use ``` active_win_pos_rs::get_position ``` to get the ```WindowPosition``` only.
 
@@ -46,6 +46,7 @@ Or use ``` active_win_pos_rs::get_position ``` to get the ```WindowPosition``` o
 Output:
 ```
 active window: ActiveWindow {
+    title: "Command Prompt - cargo  run --example active-window",
     window_id: "0x70af2",
     process_id: 22908,
     position: WindowPosition {
