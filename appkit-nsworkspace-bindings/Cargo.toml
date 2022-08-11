@@ -9,7 +9,7 @@ description = "AppKit NSWorkspace bindings"
 repository = "https://github.com/dimusic/active-win-pos-rs"
 
 [target.'cfg(target_os = "macos")'.build-dependencies]
-bindgen = "0.59"
+bindgen = "0.60.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc = "0.2"
