@@ -9,7 +9,7 @@ A small Rust library that lets you get position, size, title and a few other pro
 ### Add to Cargo.toml:
 ```toml
 [dependencies]
-active-win-pos-rs = "0.5"
+active-win-pos-rs = "0.6"
 ```
 
 ### Use:
