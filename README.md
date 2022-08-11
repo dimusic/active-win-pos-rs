@@ -31,6 +31,10 @@ Would give you an instance of ```ActiveWindow``` struct with unique window id, p
 
 Or use ``` active_win_pos_rs::get_position ``` to get the ```WindowPosition``` only.
 
+### Window title on MacOS
+On MacOS ```title``` property will always return an empty string
+unless you [Enable Screen Recording permission](https://support.apple.com/en-ca/guide/mac-help/mchld6aa7d23/mac) for your app.
+
 ## Build
 
 ```sh
