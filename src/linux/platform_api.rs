@@ -124,6 +124,7 @@ impl PlatformApi for LinuxPlatformApi {
             window_id: active_window.resource_id().to_string(),
             position,
             title,
+            name: "".into(),
         })
     }
 }

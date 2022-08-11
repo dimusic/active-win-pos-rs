@@ -93,6 +93,7 @@ impl PlatformApi for MacPlatformApi {
                         process_id: active_window_pid as u64,
                         position: win_pos,
                         title: win_title,
+                        name: "".into(),
                     };
 
                     return Ok(active_window)
