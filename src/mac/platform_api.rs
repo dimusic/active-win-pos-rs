@@ -49,7 +49,7 @@ impl PlatformApi for MacPlatformApi {
         const OPTIONS: CGWindowListOption = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
         let window_list_info = unsafe { CGWindowListCopyWindowInfo(OPTIONS, kCGNullWindowID) };
         
-        let count: isize = unsafe { CFArrayGetCount(window_list_info) };
+        let windows_count: isize = unsafe { CFArrayGetCount(window_list_info) };
 
         let active_window_pid = unsafe {
             let workspace = NSWorkspace::sharedWorkspace();
@@ -60,8 +60,12 @@ impl PlatformApi for MacPlatformApi {
         let mut win_pos = WindowPosition::new(0., 0., 0., 0.);
         let mut win_title = String::from("");
         
-        for i in 0..count-1 {
+        for i in 0..windows_count {
             let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
+
+            if dic_ref.is_null() {
+                continue;
+            }
 
             let window_pid = get_from_dict(dic_ref, "kCGWindowOwnerPID");
 
