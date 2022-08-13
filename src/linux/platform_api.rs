@@ -133,20 +133,20 @@ impl PlatformApi for LinuxPlatformApi {
             .map_err(|_| ())?;
         let title = get_xcb_window_title(&conn, *active_window)
             .map_err(|_| ())?;
-        let app_name = get_xcb_window_class(&conn, *active_window)
+        let window_class = get_xcb_window_class(&conn, *active_window)
             .map_err(|_| ())?;
         
-        let mut app_name = app_name.split('\u{0}')
+        let mut process_name = window_class.split('\u{0}')
             .filter(|str| str.len() > 0)
             .collect::<Vec<&str>>();
-        let app_name = app_name.pop().unwrap_or("").to_owned();
+        let process_name = process_name.pop().unwrap_or("").to_owned();
         
         Ok(ActiveWindow {
             process_id: window_pid.try_into().unwrap(),
             window_id: active_window.resource_id().to_string(),
             position,
             title,
-            name: app_name,
+            process_name,
         })
     }
 }

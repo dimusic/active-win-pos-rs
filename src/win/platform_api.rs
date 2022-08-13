@@ -45,7 +45,7 @@ impl PlatformApi for WindowsPlatformApi {
 
         let active_window = ActiveWindow {
             title: active_window_title,
-            name: process_name,
+            process_name,
             position: active_window_position,
             process_id: lpdw_process_id as u64,
             window_id: format!("{:?}", active_window),
