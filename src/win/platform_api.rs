@@ -1,18 +1,20 @@
 use std::path::Path;
+use winapi::{
+    shared::{
+        minwindef::MAX_PATH,
+        windef::{HWND__, RECT},
+    },
+    um::{
+        handleapi::CloseHandle,
+        processthreadsapi::OpenProcess,
+        winbase::QueryFullProcessImageNameW,
+        winnt::PROCESS_QUERY_LIMITED_INFORMATION,
+        winuser::{GetWindowThreadProcessId, GetForegroundWindow, GetWindowRect, GetWindowTextW},
+    },
+};
 
 use crate::{common::platform_api::PlatformApi, ActiveWindow};
 use crate::common::window_position::WindowPosition;
-use winapi::shared::minwindef::MAX_PATH;
-use winapi::shared::windef::{HWND__};
-use winapi::um::handleapi::CloseHandle;
-use winapi::um::processthreadsapi::OpenProcess;
-use winapi::um::winbase::QueryFullProcessImageNameW;
-use winapi::um::winnt::PROCESS_QUERY_LIMITED_INFORMATION;
-use winapi::um::winuser::{GetWindowThreadProcessId};
-use winapi::{
-    shared::windef::{ RECT },
-    um::winuser::{GetForegroundWindow, GetWindowRect, GetWindowTextW},
-};
 use super::window_position::FromWinRect;
 
 pub struct WindowsPlatformApi {
