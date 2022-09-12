@@ -1,5 +1,6 @@
+use windows::Win32::Foundation::RECT;
+
 use crate::common::window_position::WindowPosition;
-use winapi::shared::windef::{RECT};
 
 pub trait FromWinRect {
     fn from_win_rect(rect: &RECT) -> WindowPosition;
