@@ -9,7 +9,7 @@ A small Rust library that lets you get position, size, title and a few other pro
 ### Add to Cargo.toml:
 ```toml
 [dependencies]
-active-win-pos-rs = "0.6"
+active-win-pos-rs = "0.7"
 ```
 
 ### Use:
@@ -50,14 +50,15 @@ unless you [Enable Screen Recording permission](https://support.apple.com/en-ca/
 Output:
 ```
 active window: ActiveWindow {
-    title: "Command Prompt - cargo  run --example active-window",
-    window_id: "0x70af2",
-    process_id: 22908,
+    title: "cmd - cargo  run --example active-window",
+    process_name: "WindowsTerminal",
+    window_id: "HWND(9700584)",
+    process_id: 8460,
     position: WindowPosition {
-        x: 1414.0,
-        y: 135.0,
-        width: 993.0,
-        height: 519.0,
+        x: 6.0,
+        y: 296.0,
+        width: 1129.0,
+        height: 635.0,
     },
 }
 ```
