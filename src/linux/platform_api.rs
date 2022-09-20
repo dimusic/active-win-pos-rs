@@ -66,18 +66,20 @@ fn get_xcb_translated_position(conn: &xcb::Connection, active_window: x::Window)
         drawable: x::Drawable::Window(active_window),
     });
     let window_geometry = conn.wait_for_reply(window_geometry)?;
+    let window_geometry_x = window_geometry.x();
+    let window_geometry_y = window_geometry.y();
 
     let translated_position = conn.send_request(&x::TranslateCoordinates {
         dst_window: window_geometry.root(),
         src_window: active_window,
-        src_x: window_geometry.x(),
-        src_y: window_geometry.y(),
+        src_x: window_geometry_x,
+        src_y: window_geometry_y,
     });
     let translated_position = conn.wait_for_reply(translated_position)?;
 
     Ok(WindowPosition {
-        x: translated_position.dst_x().try_into().unwrap(),
-        y: translated_position.dst_y().try_into().unwrap(),
+        x: (translated_position.dst_x() - window_geometry_x).try_into().unwrap(),
+        y: (translated_position.dst_y() - window_geometry_y).try_into().unwrap(),
         width: window_geometry.width().try_into().unwrap(),
         height: window_geometry.height().try_into().unwrap(),
     })
