@@ -1,23 +1,23 @@
+use super::core_graphics_patch::CGRectMakeWithDictionaryRepresentation;
+use super::window_position::FromCgRect;
+use crate::common::{
+    active_window::ActiveWindow, platform_api::PlatformApi, window_position::WindowPosition,
+};
+use appkit_nsworkspace_bindings::{INSRunningApplication, INSWorkspace, NSWorkspace};
 use core_foundation::{
-    string::{
-        CFString, CFStringGetTypeID
-    },
-    base::{
-        ToVoid, CFGetTypeID
-    },
-    number::{
-        CFNumberRef, CFNumberGetType, CFNumberGetValue, CFBooleanGetValue, CFNumberGetTypeID, CFNumberType
-    },
+    base::{CFGetTypeID, ToVoid},
+    boolean::CFBooleanGetTypeID,
+    dictionary::CFDictionaryGetTypeID,
     mach_port::CFTypeID,
-    boolean::CFBooleanGetTypeID, dictionary::CFDictionaryGetTypeID,
+    number::{
+        CFBooleanGetValue, CFNumberGetType, CFNumberGetTypeID, CFNumberGetValue, CFNumberRef,
+        CFNumberType,
+    },
+    string::{CFString, CFStringGetTypeID},
 };
 use core_graphics::display::*;
 use objc::runtime::Object;
-use std::{ffi::c_void};
-use appkit_nsworkspace_bindings::{NSWorkspace, INSWorkspace, INSRunningApplication};
-use crate::common::{window_position::WindowPosition, platform_api::PlatformApi, active_window::ActiveWindow};
-use super::core_graphics_patch::CGRectMakeWithDictionaryRepresentation;
-use super::window_position::FromCgRect;
+use std::ffi::c_void;
 
 #[allow(non_upper_case_globals)]
 pub const kCFNumberSInt32Type: CFNumberType = 3;
@@ -33,9 +33,7 @@ enum DictEntryValue {
     _Unknown,
 }
 
-pub struct MacPlatformApi {
-    
-}
+pub struct MacPlatformApi {}
 
 impl PlatformApi for MacPlatformApi {
     fn get_position(&self) -> Result<WindowPosition, ()> {
@@ -47,9 +45,10 @@ impl PlatformApi for MacPlatformApi {
     }
 
     fn get_active_window(&self) -> Result<ActiveWindow, ()> {
-        const OPTIONS: CGWindowListOption = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
+        const OPTIONS: CGWindowListOption =
+            kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements;
         let window_list_info = unsafe { CGWindowListCopyWindowInfo(OPTIONS, kCGNullWindowID) };
-        
+
         let windows_count: isize = unsafe { CFArrayGetCount(window_list_info) };
 
         let active_window_pid = unsafe {
@@ -61,7 +60,7 @@ impl PlatformApi for MacPlatformApi {
         let mut win_pos = WindowPosition::new(0., 0., 0., 0.);
         let mut win_title = String::from("");
         let mut process_name = String::from("");
-        
+
         for i in 0..windows_count {
             let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
 
@@ -76,7 +75,9 @@ impl PlatformApi for MacPlatformApi {
                     continue;
                 }
 
-                if let DictEntryValue::_Rect(window_bounds) = get_from_dict(dic_ref, "kCGWindowBounds") {
+                if let DictEntryValue::_Rect(window_bounds) =
+                    get_from_dict(dic_ref, "kCGWindowBounds")
+                {
                     if window_bounds.width < 50. || window_bounds.height < 50. {
                         continue;
                     }
@@ -84,15 +85,21 @@ impl PlatformApi for MacPlatformApi {
                     win_pos = window_bounds;
                 }
 
-                if let DictEntryValue::_String(window_title) = get_from_dict(dic_ref, "kCGWindowName") {
+                if let DictEntryValue::_String(window_title) =
+                    get_from_dict(dic_ref, "kCGWindowName")
+                {
                     win_title = window_title;
                 }
 
-                if let DictEntryValue::_String(owner_name) = get_from_dict(dic_ref, "kCGWindowOwnerName") {
+                if let DictEntryValue::_String(owner_name) =
+                    get_from_dict(dic_ref, "kCGWindowOwnerName")
+                {
                     process_name = owner_name;
                 }
 
-                if let DictEntryValue::_Number(window_id) = get_from_dict(dic_ref, "kCGWindowNumber") {
+                if let DictEntryValue::_Number(window_id) =
+                    get_from_dict(dic_ref, "kCGWindowNumber")
+                {
                     let active_window = ActiveWindow {
                         window_id: window_id.to_string(),
                         process_id: active_window_pid as u64,
@@ -101,14 +108,12 @@ impl PlatformApi for MacPlatformApi {
                         process_name,
                     };
 
-                    return Ok(active_window)
+                    return Ok(active_window);
                 }
             }
         }
 
-        unsafe {
-            CFRelease(window_list_info as CFTypeRef)
-        }
+        unsafe { CFRelease(window_list_info as CFTypeRef) }
 
         return Err(());
     }
@@ -123,13 +128,14 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
         let type_id: CFTypeID = unsafe { CFGetTypeID(value) };
         if type_id == unsafe { CFNumberGetTypeID() } {
             let value = value as CFNumberRef;
-            
+
             #[allow(non_upper_case_globals)]
             match unsafe { CFNumberGetType(value) } {
                 kCFNumberSInt64Type => {
                     let mut value_i64 = 0_i64;
                     let out_value: *mut i64 = &mut value_i64;
-                    let converted = unsafe { CFNumberGetValue(value, kCFNumberSInt64Type, out_value.cast()) };
+                    let converted =
+                        unsafe { CFNumberGetValue(value, kCFNumberSInt64Type, out_value.cast()) };
                     if converted {
                         return DictEntryValue::_Number(value_i64);
                     }
@@ -137,7 +143,8 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
                 kCFNumberSInt32Type => {
                     let mut value_i32 = 0_i32;
                     let out_value: *mut i32 = &mut value_i32;
-                    let converted = unsafe { CFNumberGetValue(value, kCFNumberSInt32Type, out_value.cast()) };
+                    let converted =
+                        unsafe { CFNumberGetValue(value, kCFNumberSInt32Type, out_value.cast()) };
                     if converted {
                         return DictEntryValue::_Number(value_i32 as i64);
                     }

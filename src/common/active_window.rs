@@ -6,5 +6,5 @@ pub struct ActiveWindow {
     pub process_name: String,
     pub window_id: String,
     pub process_id: u64,
-    pub position: WindowPosition
+    pub position: WindowPosition,
 }

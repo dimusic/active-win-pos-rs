@@ -7,6 +7,11 @@ pub trait FromCgRect {
 
 impl FromCgRect for WindowPosition {
     fn from_cg_rect(cgrect: &CGRect) -> Self {
-        Self::new(cgrect.origin.x, cgrect.origin.y, cgrect.size.width, cgrect.size.height)
+        Self::new(
+            cgrect.origin.x,
+            cgrect.origin.y,
+            cgrect.size.width,
+            cgrect.size.height,
+        )
     }
 }

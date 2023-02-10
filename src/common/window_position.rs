@@ -12,7 +12,7 @@ impl WindowPosition {
             x,
             y,
             width: w,
-            height: h
+            height: h,
         }
     }
 }
