@@ -121,13 +121,10 @@ fn get_window_process_name(process_id: u32) -> Result<String, ()> {
     if result != 0 {
         let filename = String::from_utf8_lossy(&image_filename[..result as usize]);
         let filename = PathBuf::from_str(&filename.to_string()).unwrap().file_name().unwrap().to_str().unwrap().to_string();
-        println!("Process image filename: {}", filename);
         close_process_handle(process_handle);
 
         return Ok(filename);
     } else {
-        println!("Failed to get process image filename");
-
         close_process_handle(process_handle);
         return Err(());
     }
