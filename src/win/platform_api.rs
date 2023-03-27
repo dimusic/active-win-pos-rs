@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
+use windows::Win32::System::ProcessStatus::K32GetProcessImageFileNameA;
 use windows::core::{HSTRING, PCWSTR, PWSTR};
 use windows::w;
 use windows::Win32::Foundation::{CloseHandle, HANDLE, MAX_PATH};
@@ -7,7 +9,7 @@ use windows::Win32::Storage::FileSystem::{
     GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW,
 };
 use windows::Win32::System::Threading::{
-    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
+    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION
 };
 use windows::Win32::{
     Foundation::{HWND, RECT},
@@ -113,99 +115,27 @@ fn get_process_path(process_handle: HANDLE) -> Result<PathBuf, ()> {
 fn get_window_process_name(process_id: u32) -> Result<String, ()> {
     let process_handle = get_process_handle(process_id)?;
 
-    let process_path = get_process_path(process_handle)?;
+    let mut image_filename: [u8; 260] = [0; 260]; // 260 is the maximum length of a file path in Windows
+    let result = unsafe {K32GetProcessImageFileNameA(process_handle, &mut image_filename)};
 
-    close_process_handle(process_handle);
+    if result != 0 {
+        let filename = String::from_utf8_lossy(&image_filename[..result as usize]);
+        let filename = PathBuf::from_str(&filename.to_string()).unwrap().file_name().unwrap().to_str().unwrap().to_string();
+        println!("Process image filename: {}", filename);
+        close_process_handle(process_handle);
 
-    if let Ok(file_description) = get_file_description(&process_path) {
-        return Ok(file_description);
+        return Ok(filename);
+    } else {
+        println!("Failed to get process image filename");
+
+        close_process_handle(process_handle);
+        return Err(());
     }
-
-    let process_file_name = process_path
-        .file_stem()
-        .unwrap_or(std::ffi::OsStr::new(""))
-        .to_str()
-        .unwrap_or("")
-        .to_owned();
-
-    Ok(process_file_name)
+    
 }
 
-fn get_file_description(process_path: &PathBuf) -> Result<String, ()> {
-    let process_path_hstring: HSTRING = process_path.as_os_str().into();
 
-    let info_size = unsafe { GetFileVersionInfoSizeW(&process_path_hstring, std::ptr::null_mut()) };
 
-    if info_size == 0 {
-        return Err(());
-    }
-
-    let mut file_version_info = vec![0u8; info_size.try_into().unwrap()];
-
-    let file_info_query_success = unsafe {
-        GetFileVersionInfoW(
-            &process_path_hstring,
-            0,
-            info_size,
-            file_version_info.as_mut_ptr().cast(),
-        )
-    };
-    if !file_info_query_success.as_bool() {
-        return Err(());
-    }
-
-    let mut lang_ptr = std::ptr::null_mut();
-    let mut len = 0;
-    let lang_query_success = unsafe {
-        VerQueryValueW(
-            file_version_info.as_ptr().cast(),
-            w!("\\VarFileInfo\\Translation"),
-            &mut lang_ptr,
-            &mut len,
-        )
-    };
-    if !lang_query_success.as_bool() {
-        return Err(());
-    }
-
-    let lang: &[LangCodePage] =
-        unsafe { std::slice::from_raw_parts(lang_ptr as *const LangCodePage, 1) };
-
-    if lang.len() == 0 {
-        return Err(());
-    }
-
-    let mut query_len: u32 = 0;
-
-    let lang = lang.get(0).unwrap();
-    let lang_code = format!(
-        "\\StringFileInfo\\{:04x}{:04x}\\FileDescription",
-        lang.w_language, lang.w_code_page
-    );
-    let lang_code = PCWSTR::from(&HSTRING::from(&lang_code));
-
-    let mut file_description_ptr = std::ptr::null_mut();
-
-    let file_description_query_success = unsafe {
-        VerQueryValueW(
-            file_version_info.as_ptr().cast(),
-            lang_code,
-            &mut file_description_ptr,
-            &mut query_len,
-        )
-    };
-
-    if !file_description_query_success.as_bool() {
-        return Err(());
-    }
-
-    let file_description =
-        unsafe { std::slice::from_raw_parts(file_description_ptr.cast(), query_len as usize) };
-    let file_description = String::from_utf16_lossy(file_description);
-    let file_description = file_description.trim_matches(char::from(0)).to_owned();
-
-    return Ok(file_description);
-}
 
 fn get_process_handle(process_id: u32) -> Result<HANDLE, ()> {
     let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) };
