@@ -1,15 +1,15 @@
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use windows::Win32::System::ProcessStatus::K32GetProcessImageFileNameA;
 use windows::core::{HSTRING, PCWSTR, PWSTR};
 use windows::w;
 use windows::Win32::Foundation::{CloseHandle, HANDLE, MAX_PATH};
 use windows::Win32::Storage::FileSystem::{
     GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW,
 };
+use windows::Win32::System::ProcessStatus::K32GetProcessImageFileNameW;
 use windows::Win32::System::Threading::{
-    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION
+    OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::{
     Foundation::{HWND, RECT},
@@ -115,12 +115,18 @@ fn get_process_path(process_handle: HANDLE) -> Result<PathBuf, ()> {
 fn get_window_process_name(process_id: u32) -> Result<String, ()> {
     let process_handle = get_process_handle(process_id)?;
 
-    let mut image_filename: [u8; 260] = [0; 260]; // 260 is the maximum length of a file path in Windows
-    let result = unsafe {K32GetProcessImageFileNameA(process_handle, &mut image_filename)};
+    let mut image_filename: [u16; 260] = [0; 260]; // 260 is the maximum length of a file path in Windows
+    let result = unsafe { K32GetProcessImageFileNameW(process_handle, &mut image_filename) };
 
     if result != 0 {
-        let filename = String::from_utf8_lossy(&image_filename[..result as usize]);
-        let filename = PathBuf::from_str(&filename.to_string()).unwrap().file_name().unwrap().to_str().unwrap().to_string();
+        let filename = String::from_utf16_lossy(&image_filename[..result as usize]);
+        let filename = PathBuf::from_str(&filename.to_string())
+            .unwrap()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
         close_process_handle(process_handle);
 
         return Ok(filename);
@@ -128,11 +134,7 @@ fn get_window_process_name(process_id: u32) -> Result<String, ()> {
         close_process_handle(process_handle);
         return Err(());
     }
-    
 }
-
-
-
 
 fn get_process_handle(process_id: u32) -> Result<HANDLE, ()> {
     let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) };
