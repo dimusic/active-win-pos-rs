@@ -103,6 +103,7 @@ impl PlatformApi for MacPlatformApi {
                     let active_window = ActiveWindow {
                         window_id: window_id.to_string(),
                         process_id: active_window_pid as u64,
+                        app_name: None,
                         position: win_pos,
                         title: win_title,
                         process_name,
