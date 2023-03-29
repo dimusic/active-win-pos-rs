@@ -145,7 +145,7 @@ impl PlatformApi for LinuxPlatformApi {
         Ok(ActiveWindow {
             process_id: window_pid.try_into().unwrap(),
             window_id: active_window.resource_id().to_string(),
-            app_name: None,
+            app_name: String::default(),
             position,
             title,
             process_name,
