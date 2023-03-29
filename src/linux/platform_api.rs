@@ -148,7 +148,7 @@ impl PlatformApi for LinuxPlatformApi {
             app_name: String::default(),
             position,
             title,
-            process_name,
+            process_path: process_name,
         })
     }
 }

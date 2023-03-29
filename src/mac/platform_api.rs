@@ -106,7 +106,7 @@ impl PlatformApi for MacPlatformApi {
                         app_name: String::default(),
                         position: win_pos,
                         title: win_title,
-                        process_name,
+                        process_path: process_name,
                     };
 
                     return Ok(active_window);
