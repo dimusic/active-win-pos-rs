@@ -116,20 +116,31 @@ fn get_process_path(process_handle: HANDLE) -> Result<PathBuf, ()> {
 
 fn get_window_path_name(process_id: u32) -> Result<String, ()> {
     let process_handle = get_process_handle(process_id)?;
+    let mut lpdw_size: u32 = MAX_PATH;
+    let mut process_path_raw = vec![0; MAX_PATH as usize];
+    let process_path_pwstr = PWSTR::from_raw(process_path_raw.as_mut_ptr());
 
-    let mut image_filename: [u16; 260] = [0; 260]; // 260 is the maximum length of a file path in Windows
-    let result = unsafe { K32GetProcessImageFileNameW(process_handle, &mut image_filename) };
+    let process_path = unsafe {
+        let success = QueryFullProcessImageNameW(
+            process_handle,
+            PROCESS_NAME_WIN32,
+            process_path_pwstr,
+            &mut lpdw_size,
+        );
 
-    if result != 0 {
-        let filename = String::from_utf16_lossy(&image_filename[..result as usize]);
+        if !success.as_bool() {
+            return Err(());
+        }
 
-        close_process_handle(process_handle);
+        process_path_pwstr.to_string().map_err(|_| ())?
+    };
+    close_process_handle(process_handle);
 
-        return Ok(filename);
-    } else {
-        close_process_handle(process_handle);
-        return Err(());
-    }
+    Ok(Path::new(&process_path)
+        .to_path_buf()
+        .to_str()
+        .unwrap()
+        .to_string())
 }
 
 fn get_window_process_name(process_id: u32) -> Result<String, ()> {
