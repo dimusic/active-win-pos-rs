@@ -49,7 +49,7 @@ impl PlatformApi for WindowsPlatformApi {
         let mut lpdw_process_id: u32 = 0;
         unsafe { GetWindowThreadProcessId(active_window, &mut lpdw_process_id) };
         let process_path = get_window_path_name(lpdw_process_id)?;
-        let app_name = get_window_description_name(lpdw_process_id).unwrap_or(String::default());
+        let app_name = get_window_process_name(lpdw_process_id).unwrap_or(String::default());
 
         let active_window = ActiveWindow {
             title: active_window_title,
@@ -132,7 +132,7 @@ fn get_window_path_name(process_id: u32) -> Result<String, ()> {
     }
 }
 
-fn get_window_description_name(process_id: u32) -> Result<String, ()> {
+fn get_window_process_name(process_id: u32) -> Result<String, ()> {
     let process_handle = get_process_handle(process_id)?;
 
     let process_path = get_process_path(process_handle)?;
