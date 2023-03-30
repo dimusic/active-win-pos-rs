@@ -46,11 +46,13 @@ impl PlatformApi for WindowsPlatformApi {
         let active_window_title = get_window_title(active_window)?;
         let mut lpdw_process_id: u32 = 0;
         unsafe { GetWindowThreadProcessId(active_window, &mut lpdw_process_id) };
-        let process_name = get_window_process_name(lpdw_process_id)?;
+        let process_path = get_window_path_name(lpdw_process_id).unwrap_or(String::default());
+        let app_name = get_window_process_name(lpdw_process_id)?;
 
         let active_window = ActiveWindow {
             title: active_window_title,
-            process_name,
+            process_path,
+            app_name: app_name,
             position: active_window_position,
             process_id: lpdw_process_id as u64,
             window_id: format!("{:?}", active_window),
@@ -108,6 +110,35 @@ fn get_process_path(process_handle: HANDLE) -> Result<PathBuf, ()> {
     };
 
     Ok(Path::new(&process_path).to_path_buf())
+}
+
+fn get_window_path_name(process_id: u32) -> Result<String, ()> {
+    let process_handle = get_process_handle(process_id)?;
+    let mut lpdw_size: u32 = MAX_PATH;
+    let mut process_path_raw = vec![0; MAX_PATH as usize];
+    let process_path_pwstr = PWSTR::from_raw(process_path_raw.as_mut_ptr());
+
+    let process_path = unsafe {
+        let success = QueryFullProcessImageNameW(
+            process_handle,
+            PROCESS_NAME_WIN32,
+            process_path_pwstr,
+            &mut lpdw_size,
+        );
+
+        if !success.as_bool() {
+            return Err(());
+        }
+
+        process_path_pwstr.to_string().map_err(|_| ())?
+    };
+    close_process_handle(process_handle);
+
+    Ok(Path::new(&process_path)
+        .to_path_buf()
+        .to_str()
+        .unwrap()
+        .to_string())
 }
 
 fn get_window_process_name(process_id: u32) -> Result<String, ()> {

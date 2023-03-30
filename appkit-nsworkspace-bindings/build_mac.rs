@@ -1,9 +1,9 @@
 extern crate bindgen;
 
 use std::env;
+use std::io::Error;
 use std::path::Path;
 use std::process::Command;
-use std::io::Error;
 
 fn get_sdk_path() -> Result<String, Error> {
     let output = Command::new("xcrun")
@@ -11,21 +11,23 @@ fn get_sdk_path() -> Result<String, Error> {
         .output()?
         .stdout;
 
-    let output_str = String::from_utf8(output)
-        .expect("Failed to convert xcrun output to string");
-    
+    let output_str = String::from_utf8(output).expect("Failed to convert xcrun output to string");
+
     Ok(output_str.trim().to_string())
 }
 
 pub fn build() {
     let target = std::env::var("TARGET").unwrap();
-    
+
     let default_sdk_path = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.1.sdk";
 
     let sdk_path: String = match get_sdk_path() {
         Ok(path) => path,
         Err(e) => {
-            println!("cargo:warning=Failed to get MacOSX SDK Path. Trying to use default one. {:?}", e);
+            println!(
+                "cargo:warning=Failed to get MacOSX SDK Path. Trying to use default one. {:?}",
+                e
+            );
             String::from(default_sdk_path)
         }
     };
@@ -34,23 +36,21 @@ pub fn build() {
 
     let builder = bindgen::Builder::default()
         .rustfmt_bindings(true)
-        .header_contents("NSWorkspace.h", "
+        .header_contents(
+            "NSWorkspace.h",
+            "
             #include<AppKit/NSWorkspace.h>
             #include<AppKit/NSRunningApplication.h>
-        ")
-
+        ",
+        )
         .clang_arg(format!("--target={}", target))
         .clang_args(&["-isysroot", sdk_path.as_ref()])
-
         .block_extern_crate(true)
-
         .objc_extern_crate(true)
         .clang_arg("-ObjC")
-
         .blocklist_item("objc_object");
 
-    let bindings = builder.generate()
-        .expect("Failed to generate bindings");
+    let bindings = builder.generate().expect("Failed to generate bindings");
 
     let out_dir = env::var_os("OUT_DIR").unwrap();
 
