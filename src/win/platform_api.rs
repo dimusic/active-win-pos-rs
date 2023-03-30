@@ -52,7 +52,7 @@ impl PlatformApi for WindowsPlatformApi {
         let active_window = ActiveWindow {
             title: active_window_title,
             process_path,
-            app_name: app_name,
+            app_name,
             position: active_window_position,
             process_id: lpdw_process_id as u64,
             window_id: format!("{:?}", active_window),
@@ -71,11 +71,11 @@ fn get_foreground_window_position(hwnd: HWND) -> Result<RECT, ()> {
         let mut rect: RECT = std::mem::zeroed();
 
         if GetWindowRect(hwnd, &mut rect).as_bool() {
-            return Ok(rect);
+            Ok(rect)
         } else {
-            return Err(());
+            Err(())
         }
-    };
+    }
 }
 
 fn get_window_title(hwnd: HWND) -> Result<String, ()> {
@@ -162,7 +162,7 @@ fn get_window_process_name(process_id: u32) -> Result<String, ()> {
     Ok(process_file_name)
 }
 
-fn get_file_description(process_path: &PathBuf) -> Result<String, ()> {
+fn get_file_description(process_path: &Path) -> Result<String, ()> {
     let process_path_hstring: HSTRING = process_path.as_os_str().into();
 
     let info_size = unsafe { GetFileVersionInfoSizeW(&process_path_hstring, std::ptr::null_mut()) };
@@ -202,7 +202,7 @@ fn get_file_description(process_path: &PathBuf) -> Result<String, ()> {
     let lang: &[LangCodePage] =
         unsafe { std::slice::from_raw_parts(lang_ptr as *const LangCodePage, 1) };
 
-    if lang.len() == 0 {
+    if lang.is_empty() {
         return Err(());
     }
 
@@ -235,15 +235,15 @@ fn get_file_description(process_path: &PathBuf) -> Result<String, ()> {
     let file_description = String::from_utf16_lossy(file_description);
     let file_description = file_description.trim_matches(char::from(0)).to_owned();
 
-    return Ok(file_description);
+    Ok(file_description)
 }
 
 fn get_process_handle(process_id: u32) -> Result<HANDLE, ()> {
     let handle = unsafe { OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) };
 
-    Ok(handle.map_err(|_| ())?)
+    handle.map_err(|_| ())
 }
 
-fn close_process_handle(process_handle: HANDLE) -> () {
+fn close_process_handle(process_handle: HANDLE) {
     unsafe { CloseHandle(process_handle) };
 }
