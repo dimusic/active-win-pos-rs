@@ -41,7 +41,7 @@ impl PlatformApi for MacPlatformApi {
             return Ok(active_window.position);
         }
 
-        return Err(());
+        Err(())
     }
 
     fn get_active_window(&self) -> Result<ActiveWindow, ()> {
@@ -122,7 +122,7 @@ impl PlatformApi for MacPlatformApi {
 
         unsafe { CFRelease(window_list_info as CFTypeRef) }
 
-        return Err(());
+        Err(())
     }
 }
 
@@ -184,7 +184,7 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
 pub fn nsstring_to_rust_string(nsstring: *mut Object) -> String {
     unsafe {
         let cstr: *const i8 = msg_send![nsstring, UTF8String];
-        if cstr != std::ptr::null() {
+        if !cstr.is_null() {
             std::ffi::CStr::from_ptr(cstr)
                 .to_string_lossy()
                 .into_owned()
