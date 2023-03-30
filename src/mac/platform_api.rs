@@ -3,7 +3,7 @@ use super::window_position::FromCgRect;
 use crate::common::{
     active_window::ActiveWindow, platform_api::PlatformApi, window_position::WindowPosition,
 };
-use appkit_nsworkspace_bindings::{INSRunningApplication, INSWorkspace, NSWorkspace};
+use appkit_nsworkspace_bindings::{INSRunningApplication, INSWorkspace, NSWorkspace, INSURL};
 use core_foundation::{
     base::{CFGetTypeID, ToVoid},
     boolean::CFBooleanGetTypeID,
@@ -51,15 +51,16 @@ impl PlatformApi for MacPlatformApi {
 
         let windows_count: isize = unsafe { CFArrayGetCount(window_list_info) };
 
-        let active_window_pid = unsafe {
+        let active_app = unsafe {
             let workspace = NSWorkspace::sharedWorkspace();
-            let active_app = workspace.frontmostApplication();
-            active_app.processIdentifier() as i64
+            workspace.frontmostApplication()
         };
+
+        let active_window_pid = unsafe { active_app.processIdentifier() as i64 };
 
         let mut win_pos = WindowPosition::new(0., 0., 0., 0.);
         let mut win_title = String::from("");
-        let mut process_name = String::from("");
+        let mut app_name = String::from("");
 
         for i in 0..windows_count {
             let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
@@ -94,8 +95,13 @@ impl PlatformApi for MacPlatformApi {
                 if let DictEntryValue::_String(owner_name) =
                     get_from_dict(dic_ref, "kCGWindowOwnerName")
                 {
-                    process_name = owner_name;
+                    app_name = owner_name;
                 }
+
+                let process_path: String = unsafe {
+                    let bundle_url = active_app.bundleURL().path();
+                    nsstring_to_rust_string(bundle_url.0)
+                };
 
                 if let DictEntryValue::_Number(window_id) =
                     get_from_dict(dic_ref, "kCGWindowNumber")
@@ -103,10 +109,10 @@ impl PlatformApi for MacPlatformApi {
                     let active_window = ActiveWindow {
                         window_id: window_id.to_string(),
                         process_id: active_window_pid as u64,
-                        app_name: String::default(),
+                        app_name,
                         position: win_pos,
                         title: win_title,
-                        process_path: process_name,
+                        process_path,
                     };
 
                     return Ok(active_window);
