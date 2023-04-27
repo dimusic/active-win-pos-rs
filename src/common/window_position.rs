@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WindowPosition {
     pub x: f64,
     pub y: f64,
