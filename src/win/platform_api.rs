@@ -52,7 +52,7 @@ impl PlatformApi for WindowsPlatformApi {
         let active_window_position = WindowPosition::from_win_rect(&win_position);
         let active_window_title = get_window_title(active_window)?;
         let mut lpdw_process_id: u32 = 0;
-        unsafe { GetWindowThreadProcessId(active_window, &mut lpdw_process_id) };
+        unsafe { GetWindowThreadProcessId(active_window, Some(&mut lpdw_process_id)) };
         let process_path = get_window_path_name(lpdw_process_id).unwrap_or(String::default());
         let app_name = get_window_process_name(lpdw_process_id)?;
 
@@ -190,7 +190,7 @@ fn get_window_process_name(process_id: u32) -> Result<String, ()> {
 fn get_file_description(process_path: &Path) -> Result<String, ()> {
     let process_path_hstring: HSTRING = process_path.as_os_str().into();
 
-    let info_size = unsafe { GetFileVersionInfoSizeW(&process_path_hstring, std::ptr::null_mut()) };
+    let info_size = unsafe { GetFileVersionInfoSizeW(&process_path_hstring, Some(std::ptr::null_mut())) };
 
     if info_size == 0 {
         return Err(());
@@ -238,7 +238,9 @@ fn get_file_description(process_path: &Path) -> Result<String, ()> {
         "\\StringFileInfo\\{:04x}{:04x}\\FileDescription",
         lang.w_language, lang.w_code_page
     );
-    let lang_code = PCWSTR::from(&HSTRING::from(&lang_code));
+    let hstring = HSTRING::from(lang_code);
+    let mut lang_code_ptr = unsafe{*hstring.as_ptr()}; // Get the pointer to the HSTRING data
+    let lang_code = PCWSTR(&mut lang_code_ptr);
 
     let mut file_description_ptr = std::ptr::null_mut();
 
