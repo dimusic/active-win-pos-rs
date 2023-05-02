@@ -1,6 +1,10 @@
+use std::mem::size_of_val;
+use std::os::raw::c_void;
 use std::path::{Path, PathBuf};
 
 use windows::core::{HSTRING, PCWSTR, PWSTR};
+use windows::Win32::UI::WindowsAndMessaging::GUITHREADINFO;
+
 use windows::w;
 use windows::Win32::Foundation::{CloseHandle, HANDLE, MAX_PATH};
 use windows::Win32::Storage::FileSystem::{
@@ -12,7 +16,8 @@ use windows::Win32::System::Threading::{
 use windows::Win32::{
     Foundation::{HWND, RECT},
     UI::WindowsAndMessaging::{
-        GetForegroundWindow, GetWindowRect, GetWindowTextW, GetWindowThreadProcessId,
+        GetForegroundWindow, GetGUIThreadInfo, GetWindowRect, GetWindowTextW,
+        GetWindowThreadProcessId,
     },
 };
 
@@ -40,7 +45,9 @@ impl PlatformApi for WindowsPlatformApi {
     }
 
     fn get_active_window(&self) -> Result<crate::ActiveWindow, ()> {
-        let active_window = get_foreground_window();
+        let active_window = get_new_hwid();
+        // let active_window = get_foreground_window();
+
         let win_position = get_foreground_window_position(active_window)?;
         let active_window_position = WindowPosition::from_win_rect(&win_position);
         let active_window_title = get_window_title(active_window)?;
@@ -139,6 +146,24 @@ fn get_window_path_name(process_id: u32) -> Result<String, ()> {
         .to_str()
         .unwrap()
         .to_string())
+}
+
+fn get_new_hwid() -> HWND {
+    let null_ptr: *const c_void = std::ptr::null();
+
+    let mut gui_thread = GUITHREADINFO::default();
+    gui_thread.cbSize = size_of_val(&gui_thread) as u32;
+
+    unsafe { GetGUIThreadInfo(0, &mut gui_thread) };
+
+    let mut focus_hwnd = gui_thread.hwndFocus;
+
+    if focus_hwnd.0 == null_ptr as isize {
+        println!("supposed error, matching number");
+        focus_hwnd = gui_thread.hwndActive;
+    }
+
+    focus_hwnd
 }
 
 fn get_window_process_name(process_id: u32) -> Result<String, ()> {

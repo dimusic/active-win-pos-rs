@@ -1,6 +1,6 @@
 use super::window_position::WindowPosition;
 
-#[derive(Debug, Clone,Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct ActiveWindow {
     pub title: String,
     pub process_path: String,
