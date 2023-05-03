@@ -1,3 +1,5 @@
+use std::fs::read_link;
+
 use xcb::{x, Xid};
 
 use crate::{common::platform_api::PlatformApi, ActiveWindow, WindowPosition};
@@ -142,13 +144,20 @@ impl PlatformApi for LinuxPlatformApi {
             .collect::<Vec<&str>>();
         let process_name = process_name.pop().unwrap_or("").to_owned();
 
+        let process_path = read_link(format!("/proc/{}/exe", window_pid));
+        let process_path = if let Ok(path) = process_path {
+            path.into_os_string().into_string().unwrap_or(String::new())
+        } else {
+            String::new()
+        };
+
         Ok(ActiveWindow {
             process_id: window_pid.try_into().unwrap(),
             window_id: active_window.resource_id().to_string(),
-            app_name: String::default(),
+            app_name: process_name,
             position,
             title,
-            process_path: process_name,
+            process_path,
         })
     }
 }
