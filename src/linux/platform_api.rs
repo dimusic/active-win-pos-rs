@@ -19,7 +19,7 @@ fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<
     });
     let window_pid = conn.wait_for_reply(window_pid)?;
 
-    Ok(window_pid.value::<u32>().get(0).unwrap_or(&0).to_owned())
+    Ok(window_pid.value::<u32>().first().unwrap_or(&0).to_owned())
 }
 
 fn get_xcb_window_title(conn: &xcb::Connection, window: x::Window) -> xcb::Result<String> {
@@ -138,7 +138,7 @@ impl PlatformApi for LinuxPlatformApi {
 
         let mut process_name = window_class
             .split('\u{0}')
-            .filter(|str| str.len() > 0)
+            .filter(|str| !str.is_empty())
             .collect::<Vec<&str>>();
         let process_name = process_name.pop().unwrap_or("").to_owned();
 
