@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct WindowPosition {
     pub x: f64,
     pub y: f64,
@@ -14,5 +14,11 @@ impl WindowPosition {
             width: w,
             height: h,
         }
+    }
+}
+
+impl Default for WindowPosition {
+    fn default() -> Self {
+        Self::new(0.0, 0.0, 0.0, 0.0)
     }
 }
