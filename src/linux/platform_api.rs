@@ -1,3 +1,5 @@
+use std::fs::read_link;
+
 use xcb::{x, Xid};
 
 use crate::{common::platform_api::PlatformApi, ActiveWindow, WindowPosition};
@@ -19,7 +21,7 @@ fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<
     });
     let window_pid = conn.wait_for_reply(window_pid)?;
 
-    Ok(window_pid.value::<u32>().get(0).unwrap_or(&0).to_owned())
+    Ok(window_pid.value::<u32>().first().unwrap_or(&0).to_owned())
 }
 
 fn get_xcb_window_title(conn: &xcb::Connection, window: x::Window) -> xcb::Result<String> {
@@ -138,17 +140,24 @@ impl PlatformApi for LinuxPlatformApi {
 
         let mut process_name = window_class
             .split('\u{0}')
-            .filter(|str| str.len() > 0)
+            .filter(|str| !str.is_empty())
             .collect::<Vec<&str>>();
         let process_name = process_name.pop().unwrap_or("").to_owned();
+
+        let process_path = read_link(format!("/proc/{}/exe", window_pid));
+        let process_path = if let Ok(path) = process_path {
+            path.into_os_string().into_string().unwrap_or(String::new())
+        } else {
+            String::new()
+        };
 
         Ok(ActiveWindow {
             process_id: window_pid.try_into().unwrap(),
             window_id: active_window.resource_id().to_string(),
-            app_name: String::default(),
+            app_name: process_name,
             position,
             title,
-            process_path: process_name,
+            process_path,
         })
     }
 }

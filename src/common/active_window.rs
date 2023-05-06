@@ -9,3 +9,9 @@ pub struct ActiveWindow {
     pub process_id: u64,
     pub position: WindowPosition,
 }
+
+impl PartialEq for ActiveWindow {
+    fn eq(&self, other: &Self) -> bool {
+        self.process_id == other.process_id && self.window_id == other.window_id
+    }
+}
