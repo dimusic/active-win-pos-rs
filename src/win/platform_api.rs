@@ -35,7 +35,7 @@ pub struct WindowsPlatformApi {}
 
 impl PlatformApi for WindowsPlatformApi {
     fn get_position(&self) -> Result<WindowPosition, ()> {
-        let active_window = get_foreground_window();
+        let active_window = get_new_hwid();
 
         if let Ok(win_position) = get_foreground_window_position(active_window) {
             return Ok(WindowPosition::from_win_rect(&win_position));
@@ -65,10 +65,6 @@ impl PlatformApi for WindowsPlatformApi {
 
         Ok(active_window)
     }
-}
-
-fn get_foreground_window() -> HWND {
-    unsafe { GetForegroundWindow() }
 }
 
 fn get_foreground_window_position(hwnd: HWND) -> Result<RECT, ()> {
