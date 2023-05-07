@@ -46,8 +46,6 @@ impl PlatformApi for WindowsPlatformApi {
 
     fn get_active_window(&self) -> Result<crate::ActiveWindow, ()> {
         let active_window = get_new_hwid();
-        // let active_window = get_foreground_window();
-
         let win_position = get_foreground_window_position(active_window)?;
         let active_window_position = WindowPosition::from_win_rect(&win_position);
         let active_window_title = get_window_title(active_window)?;
