@@ -2,15 +2,16 @@ use std::path::{Path, PathBuf};
 
 use windows::core::{HSTRING, PCWSTR, PWSTR};
 use windows::w;
-use windows::Win32::Foundation::{CloseHandle, HANDLE, MAX_PATH};
+use windows::Win32::Foundation::{CloseHandle, BOOL, FALSE, HANDLE, MAX_PATH, TRUE};
 use windows::Win32::Storage::FileSystem::{
     GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW,
 };
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
+use windows::Win32::UI::WindowsAndMessaging::EnumChildWindows;
 use windows::Win32::{
-    Foundation::{HWND, RECT},
+    Foundation::{HWND, LPARAM, RECT},
     UI::WindowsAndMessaging::{
         GetForegroundWindow, GetWindowRect, GetWindowTextW, GetWindowThreadProcessId,
     },
@@ -24,6 +25,44 @@ use super::window_position::FromWinRect;
 struct LangCodePage {
     pub w_language: u16,
     pub w_code_page: u16,
+}
+
+#[derive(Debug, Default)]
+struct UwpAppWindowInfo {
+    pub name: String,
+    pub path: PathBuf,
+    pub parent_path: PathBuf,
+}
+impl UwpAppWindowInfo {
+    pub fn new(name: String, path: PathBuf, parent_path: PathBuf) -> Self {
+        Self {
+            name,
+            path,
+            parent_path,
+        }
+    }
+}
+
+unsafe extern "system" fn enumerate_uwp_app_windows_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
+    let uwp_app_window_info: &mut UwpAppWindowInfo = std::mem::transmute(lparam);
+
+    let mut child_process_id: u32 = 0;
+    unsafe { GetWindowThreadProcessId(hwnd, Some(&mut child_process_id as *mut u32)) };
+    let child_process_path = get_process_path(child_process_id);
+
+    if child_process_path.is_err() {
+        return FALSE;
+    }
+
+    if &uwp_app_window_info.parent_path != child_process_path.as_ref().unwrap() {
+        let path = child_process_path.unwrap();
+        uwp_app_window_info.path = path.clone();
+        uwp_app_window_info.name = get_process_name(&path).unwrap_or(String::default());
+
+        return FALSE;
+    }
+
+    TRUE
 }
 
 pub struct WindowsPlatformApi {}
@@ -41,13 +80,37 @@ impl PlatformApi for WindowsPlatformApi {
 
     fn get_active_window(&self) -> Result<crate::ActiveWindow, ()> {
         let active_window = get_foreground_window();
+
         let win_position = get_foreground_window_position(active_window)?;
         let active_window_position = WindowPosition::from_win_rect(&win_position);
         let active_window_title = get_window_title(active_window)?;
         let mut lpdw_process_id: u32 = 0;
         unsafe { GetWindowThreadProcessId(active_window, Some(&mut lpdw_process_id as *mut u32)) };
-        let process_path = get_process_path(lpdw_process_id)?;
-        let app_name = get_process_name(&process_path)?;
+
+        let mut process_path = get_process_path(lpdw_process_id)?;
+        let file_name = process_path.file_name();
+        let mut app_name = String::default();
+
+        if file_name.is_some() && file_name.unwrap() == "ApplicationFrameHost.exe" {
+            unsafe {
+                let mut uwp_window_info = UwpAppWindowInfo::new(
+                    String::default(),
+                    PathBuf::default(),
+                    process_path.clone(),
+                );
+
+                EnumChildWindows(
+                    active_window,
+                    Some(enumerate_uwp_app_windows_callback),
+                    LPARAM(&mut uwp_window_info as *mut UwpAppWindowInfo as isize),
+                );
+
+                process_path = uwp_window_info.path;
+                app_name = uwp_window_info.name;
+            };
+        } else {
+            app_name = get_process_name(&process_path)?;
+        }
 
         let active_window = ActiveWindow {
             title: active_window_title,
@@ -119,8 +182,9 @@ fn get_process_path(process_id: u32) -> Result<PathBuf, ()> {
 }
 
 fn get_process_name(process_path: &Path) -> Result<String, ()> {
-    if let Ok(file_description) = get_file_description(process_path) {
-        return Ok(file_description);
+    let file_description = get_file_description(process_path);
+    if file_description.is_ok() && !file_description.as_ref().unwrap().is_empty() {
+        return file_description;
     }
 
     let process_file_name = process_path
