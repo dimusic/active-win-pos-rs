@@ -54,11 +54,7 @@ impl PlatformApi for WindowsPlatformApi {
 
         let active_window = ActiveWindow {
             title: active_window_title,
-            process_path: process_path
-                .clone()
-                .into_os_string()
-                .into_string()
-                .unwrap_or(String::default()),
+            process_path: process_path.clone(),
             app_name,
             position: active_window_position,
             process_id: process_id as u64,
@@ -99,10 +95,7 @@ fn get_uwp_window_info(mut active_window: ActiveWindow) -> ActiveWindow {
     if let Ok(gui_process_path) = get_process_path(gui_process_id) {
         let gui_process_name = get_process_name(&gui_process_path).unwrap_or(String::default());
 
-        active_window.process_path = gui_process_path
-            .into_os_string()
-            .into_string()
-            .unwrap_or(String::default());
+        active_window.process_path = gui_process_path;
         active_window.process_id = gui_process_id as u64;
         active_window.app_name = gui_process_name;
     }
