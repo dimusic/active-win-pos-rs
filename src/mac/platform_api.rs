@@ -17,7 +17,7 @@ use core_foundation::{
 };
 use core_graphics::display::*;
 use objc::runtime::Object;
-use std::ffi::c_void;
+use std::{ffi::c_void, path::PathBuf};
 
 #[allow(non_upper_case_globals)]
 pub const kCFNumberSInt32Type: CFNumberType = 3;
@@ -98,9 +98,9 @@ impl PlatformApi for MacPlatformApi {
                     app_name = owner_name;
                 }
 
-                let process_path: String = unsafe {
+                let process_path: PathBuf = unsafe {
                     let bundle_url = active_app.bundleURL().path();
-                    nsstring_to_rust_string(bundle_url.0)
+                    PathBuf::from(nsstring_to_rust_string(bundle_url.0))
                 };
 
                 if let DictEntryValue::_Number(window_id) =
