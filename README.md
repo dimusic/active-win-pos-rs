@@ -9,7 +9,7 @@ A small Rust library that lets you get position, size, title and a few other pro
 ### Add to Cargo.toml:
 ```toml
 [dependencies]
-active-win-pos-rs = "0.7"
+active-win-pos-rs = "0.8"
 ```
 
 ### Use:
@@ -51,7 +51,8 @@ Output:
 ```
 active window: ActiveWindow {
     title: "cmd - cargo  run --example active-window",
-    process_name: "WindowsTerminal",
+    process_path: "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.16.10262.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe",
+    app_name: "WindowsTerminal",
     window_id: "HWND(9700584)",
     process_id: 8460,
     position: WindowPosition {
