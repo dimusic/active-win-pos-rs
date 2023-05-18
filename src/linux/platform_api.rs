@@ -145,11 +145,6 @@ impl PlatformApi for LinuxPlatformApi {
         let process_name = process_name.pop().unwrap_or("").to_owned();
 
         let process_path = read_link(format!("/proc/{}/exe", window_pid));
-        let process_path = if let Ok(path) = process_path {
-            path.into_os_string().into_string().unwrap_or(String::new())
-        } else {
-            String::new()
-        };
 
         Ok(ActiveWindow {
             process_id: window_pid.try_into().unwrap(),
@@ -157,7 +152,7 @@ impl PlatformApi for LinuxPlatformApi {
             app_name: process_name,
             position,
             title,
-            process_path,
+            process_path: process_path.unwrap_or_default(),
         })
     }
 }
