@@ -1,6 +1,6 @@
 [package]
 name = "active-win-pos-rs"
-version = "0.8.1"
+version = "0.8.2"
 authors = ["Dmitry Malkov <dmitry.malkov@live.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -14,10 +14,10 @@ members = [
 ]
 
 [target.'cfg(target_os = "macos")'.dependencies]
-core-graphics = "0.22"
+core-graphics = "0.23"
 core-foundation = "0.9"
-objc = "0.2.7"
-appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings", version = "0.1.0" }
+objc = "0.2"
+appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings", version = "0.1" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.48.0", features = [
