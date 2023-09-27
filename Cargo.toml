@@ -17,7 +17,7 @@ members = [
 core-graphics = "0.23"
 core-foundation = "0.9"
 objc = "0.2"
-appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings", version = "0.1" }
+appkit-nsworkspace-bindings = { path = "./appkit-nsworkspace-bindings", version = "0.1.2" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.48.0", features = [
