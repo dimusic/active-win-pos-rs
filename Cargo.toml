@@ -30,3 +30,6 @@ windows = { version = "0.48.0", features = [
 
 [target.'cfg(target_os = "linux")'.dependencies]
 xcb = { version = "1.2.1", features = [ "randr" ] }
+
+[dependencies]
+encoding = "0.2.33"
