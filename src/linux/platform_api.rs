@@ -1,15 +1,8 @@
 use std::fs::read_link;
 
-use encoding::{all::ISO_8859_16, Encoding};
 use xcb::{x, Xid};
 
 use crate::{common::platform_api::PlatformApi, ActiveWindow, WindowPosition};
-
-fn latin1_to_utf8(str: &[u8]) -> String {
-    ISO_8859_16
-        .decode(str, encoding::DecoderTrap::Ignore)
-        .unwrap_or("".into())
-}
 
 fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<u32> {
     let window_pid = conn.send_request(&x::InternAtom {
@@ -41,8 +34,9 @@ fn get_xcb_window_title(conn: &xcb::Connection, window: x::Window) -> xcb::Resul
         long_length: 1024,
     });
     let window_title = conn.wait_for_reply(window_title)?;
-    let window_title = latin1_to_utf8(window_title.value());
-    Ok(window_title.to_owned())
+    let window_title = window_title.value();
+    let window_title = String::from_utf8_lossy(window_title);
+    Ok(window_title.into_owned())
 }
 
 fn get_xcb_window_class(conn: &xcb::Connection, window: x::Window) -> xcb::Result<String> {
