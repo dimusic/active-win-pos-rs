@@ -24,7 +24,35 @@ fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<
     Ok(window_pid.value::<u32>().first().unwrap_or(&0).to_owned())
 }
 
+//Uses _NET_WM_NAME to get window title in UTF-8 encoding
+fn get_ewmh_window_title(conn: &xcb::Connection, window: x::Window) -> xcb::Result<String> {
+    let wm_name_atom = conn.send_request(&x::InternAtom {
+        only_if_exists: true,
+        name: "_NET_WM_NAME".as_bytes(),
+    });
+    let wm_name_atom = conn.wait_for_reply(wm_name_atom)?.atom();
+
+    let window_title = conn.send_request(&x::GetProperty {
+        delete: false,
+        window,
+        property: wm_name_atom,
+        r#type: x::ATOM_ANY,
+        long_offset: 0,
+        long_length: 1024,
+    });
+    let window_title = conn.wait_for_reply(window_title)?;
+
+    let window_title = String::from_utf8_lossy(window_title.value());
+    Ok(window_title.into_owned())
+}
+
 fn get_xcb_window_title(conn: &xcb::Connection, window: x::Window) -> xcb::Result<String> {
+    let ewmh_window_title = get_ewmh_window_title(conn, window);
+
+    if ewmh_window_title.is_ok() {
+        return ewmh_window_title;
+    }
+
     let window_title = conn.send_request(&x::GetProperty {
         delete: false,
         window,
@@ -34,9 +62,8 @@ fn get_xcb_window_title(conn: &xcb::Connection, window: x::Window) -> xcb::Resul
         long_length: 1024,
     });
     let window_title = conn.wait_for_reply(window_title)?;
-    let window_title = window_title.value();
-    let window_title = std::str::from_utf8(window_title);
-    Ok(window_title.unwrap_or("").to_owned())
+    let window_title = String::from_utf8_lossy(window_title.value());
+    Ok(window_title.into_owned())
 }
 
 fn get_xcb_window_class(conn: &xcb::Connection, window: x::Window) -> xcb::Result<String> {
