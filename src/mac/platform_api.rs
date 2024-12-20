@@ -115,6 +115,8 @@ impl PlatformApi for MacPlatformApi {
                         process_path,
                     };
 
+                    unsafe { CFRelease(window_list_info as CFTypeRef) }
+
                     return Ok(active_window);
                 }
             }
