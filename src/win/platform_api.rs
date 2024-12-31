@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use windows::core::{HSTRING, PCWSTR, PWSTR};
 use windows::w;
 use windows::Win32::Foundation::{CloseHandle, HANDLE, MAX_PATH};
+use windows::Win32::Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS};
 use windows::Win32::Storage::FileSystem::{
     GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW,
 };
@@ -111,11 +112,22 @@ fn get_foreground_window_position(hwnd: HWND) -> Result<RECT, ()> {
     unsafe {
         let mut rect: RECT = std::mem::zeroed();
 
-        if GetWindowRect(hwnd, &mut rect).as_bool() {
-            Ok(rect)
-        } else {
-            Err(())
+        // Try DwmGetWindowAttribute first for more accurate bounds
+        let result = DwmGetWindowAttribute(
+            hwnd,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
+            &mut rect as *mut RECT as *mut _,
+            std::mem::size_of::<RECT>() as u32,
+        );
+
+        // Fall back to GetWindowRect if DwmGetWindowAttribute fails
+        if result.is_err() {
+            if !GetWindowRect(hwnd, &mut rect).as_bool() {
+                return Err(());
+            }
         }
+
+        Ok(rect)
     }
 }
 
