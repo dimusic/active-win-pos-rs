@@ -94,7 +94,7 @@ fn get_uwp_window_info(mut active_window: ActiveWindow) -> ActiveWindow {
     };
 
     if let Ok(gui_process_path) = get_process_path(gui_process_id) {
-        let gui_process_name = get_process_name(&gui_process_path).unwrap_or(String::default());
+        let gui_process_name = get_process_name(&gui_process_path).unwrap_or_default();
 
         active_window.process_path = gui_process_path;
         active_window.process_id = gui_process_id as u64;
@@ -121,10 +121,8 @@ fn get_foreground_window_position(hwnd: HWND) -> Result<RECT, ()> {
         );
 
         // Fall back to GetWindowRect if DwmGetWindowAttribute fails
-        if result.is_err() {
-            if !GetWindowRect(hwnd, &mut rect).as_bool() {
-                return Err(());
-            }
+        if result.is_err() && !GetWindowRect(hwnd, &mut rect).as_bool() {
+            return Err(());
         }
 
         Ok(rect)
@@ -230,7 +228,7 @@ fn get_file_description(process_path: &Path) -> Result<String, ()> {
 
     let mut query_len: u32 = 0;
 
-    let lang = lang.get(0).unwrap();
+    let lang = lang.first().unwrap();
     let lang_code = format!(
         "\\StringFileInfo\\{:04x}{:04x}\\FileDescription",
         lang.w_language, lang.w_code_page
