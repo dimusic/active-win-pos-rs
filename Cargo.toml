@@ -1,6 +1,6 @@
 [package]
 name = "active-win-pos-rs"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Dmitry Malkov <dmitry.malkov@live.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
