@@ -99,8 +99,13 @@ impl PlatformApi for MacPlatformApi {
                 }
 
                 let process_path: PathBuf = unsafe {
-                    let bundle_url = active_app.bundleURL().path();
-                    PathBuf::from(nsstring_to_rust_string(bundle_url.0))
+                    let bundle_url = active_app.bundleURL();
+                    if bundle_url.0.is_null() {
+                        PathBuf::new()
+                    } else {
+                        let path = bundle_url.path();
+                        PathBuf::from(nsstring_to_rust_string(path.0))
+                    }
                 };
 
                 if let DictEntryValue::_Number(window_id) =
