@@ -63,3 +63,11 @@ active window: ActiveWindow {
     },
 }
 ```
+
+## Project Support
+This project is supported by a few maker-focused businesses I run and actively use in my workflow.
+If you work with laser cutting, CNC, or digital art, you might find them useful too.
+- **[MyLaserTools](https://mylasertools.com)** tools and resources for laser cutting, CNC machining, and 3D printing.
+- **[YXE Creations Craft Hub](https://yxecreations.com)** a laser craft supply store for acrylic, plywood, and maker materials.
+- **[Lumicry](https://lumicry.com)** digital luminous neon and acrylic art powered by LEDs and custom electronics.
+
