@@ -124,17 +124,10 @@ fn try_hyprland() -> Option<ActiveWindow> {
 
     let process_path = read_link(format!("/proc/{}/exe", pid)).unwrap_or_default();
 
-    let (x, y) = if window.at.len() >= 2 {
-        (window.at[0] as f64, window.at[1] as f64)
-    } else {
-        (0.0, 0.0)
-    };
-
-    let (width, height) = if window.size.len() >= 2 {
-        (window.size[0] as f64, window.size[1] as f64)
-    } else {
-        (0.0, 0.0)
-    };
+    // Validate that we have position data
+    if window.at.len() < 2 || window.size.len() < 2 {
+        return None;
+    }
 
     Some(ActiveWindow {
         title: window.title,
@@ -143,10 +136,10 @@ fn try_hyprland() -> Option<ActiveWindow> {
         process_id: pid as u64,
         process_path,
         position: WindowPosition {
-            x,
-            y,
-            width,
-            height,
+            x: window.at[0] as f64,
+            y: window.at[1] as f64,
+            width: window.size[0] as f64,
+            height: window.size[1] as f64,
         },
     })
 }
@@ -196,21 +189,35 @@ fn try_kwin() -> Option<ActiveWindow> {
     let mut title = String::new();
     let mut app_name = String::new();
     let mut pid = 0u32;
+    let mut title_found = false;
+    let mut app_found = false;
+    let mut pid_found = false;
     
     for line in output_str.lines() {
-        if line.contains("caption") || line.contains("title") {
+        let line = line.trim();
+        if !title_found && (line.contains("caption") || line.contains("\"title\"")) {
             if let Some(value) = line.split('"').nth(1) {
-                title = value.to_string();
+                if !value.is_empty() {
+                    title = value.to_string();
+                    title_found = true;
+                }
             }
         }
-        if line.contains("resourceClass") || line.contains("resourceName") {
+        if !app_found && (line.contains("resourceClass") || line.contains("resourceName")) {
             if let Some(value) = line.split('"').nth(1) {
-                app_name = value.to_string();
+                if !value.is_empty() {
+                    app_name = value.to_string();
+                    app_found = true;
+                }
             }
         }
-        if line.contains("pid") {
+        if !pid_found && line.contains("\"pid\"") {
+            // Look for the pid value in the next line or same line
             if let Some(num_part) = line.split_whitespace().last() {
-                pid = num_part.parse().unwrap_or(0);
+                if let Ok(parsed_pid) = num_part.parse::<u32>() {
+                    pid = parsed_pid;
+                    pid_found = true;
+                }
             }
         }
     }
@@ -282,6 +289,10 @@ fn try_gnome() -> Option<ActiveWindow> {
         .replace("\\'", "'");
 
     let windows: Vec<GnomeWindow> = serde_json::from_str(&json_str).ok()?;
+    
+    // Note: We assume the first window is the focused one. The GNOME Shell Extensions API
+    // typically returns windows in focus order, with the active window first, but this is
+    // not guaranteed by the API specification. This is a best-effort approach for GNOME.
     let window = windows.first()?;
 
     let pid = window.pid;
