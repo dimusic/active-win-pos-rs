@@ -186,6 +186,8 @@ fn try_kwin() -> Option<ActiveWindow> {
     
     // Try to extract basic info from dbus output
     // This is a best-effort approach as dbus-send output is complex
+    // Note: We look for "caption" or "\"title\"" for the window title.
+    // If multiple matches exist, the first one is used. Similarly for resourceClass/resourceName.
     let mut title = String::new();
     let mut app_name = String::new();
     let mut pid = 0u32;
@@ -279,13 +281,14 @@ fn try_gnome() -> Option<ActiveWindow> {
 
     let output_str = String::from_utf8(output.stdout).ok()?;
     
-    // Strip the gdbus variant tuple wrapper: (<'[{...}]'>,) -> [{...}]
+    // Strip the gdbus variant tuple wrapper
+    // Handles both formats: (<'[{...}]'>,) and ('[{...}]',)
     let json_str = output_str
         .trim()
-        .trim_start_matches("(<'")
-        .trim_start_matches("('")
-        .trim_end_matches("'>,)")
-        .trim_end_matches("',)")
+        .strip_prefix("(<'")
+        .or_else(|| output_str.trim().strip_prefix("('"))
+        .and_then(|s| s.strip_suffix("'>,)").or_else(|| s.strip_suffix("',)")))
+        .unwrap_or(output_str.trim())
         .replace("\\'", "'");
 
     let windows: Vec<GnomeWindow> = serde_json::from_str(&json_str).ok()?;
