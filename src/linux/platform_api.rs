@@ -1,8 +1,10 @@
+use std::env;
 use std::fs::read_link;
 
 use xcb::{x, Xid};
 
 use crate::{common::platform_api::PlatformApi, ActiveWindow, WindowPosition};
+use super::wayland::get_active_window_wayland;
 
 fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<u32> {
     let window_pid = conn.send_request(&x::InternAtom {
@@ -121,6 +123,10 @@ fn get_xcb_translated_position(
     })
 }
 
+fn is_wayland() -> bool {
+    env::var("WAYLAND_DISPLAY").is_ok()
+}
+
 pub struct LinuxPlatformApi {}
 
 impl PlatformApi for LinuxPlatformApi {
@@ -130,6 +136,20 @@ impl PlatformApi for LinuxPlatformApi {
     }
 
     fn get_active_window(&self) -> Result<ActiveWindow, ()> {
+        // Try Wayland first if WAYLAND_DISPLAY is set
+        if is_wayland() {
+            if let Some(window) = get_active_window_wayland() {
+                return Ok(window);
+            }
+        }
+
+        // Fall back to X11/XCB
+        self.get_active_window_x11()
+    }
+}
+
+impl LinuxPlatformApi {
+    fn get_active_window_x11(&self) -> Result<ActiveWindow, ()> {
         let (conn, _) = xcb::Connection::connect(None).map_err(|_| ())?;
         let setup = conn.get_setup();
 
