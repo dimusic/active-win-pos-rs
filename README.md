@@ -37,10 +37,7 @@ unless you [Enable Screen Recording permission](https://support.apple.com/en-ca/
 
 ### Wayland support on Linux
 On Linux, the library now supports both X11 and Wayland. When running on Wayland (detected via the `WAYLAND_DISPLAY` environment variable), the library will attempt to get the active window information from the following compositors, in order:
-- **Sway** and other wlroots-based compositors (via `swaymsg`)
-- **Hyprland** (via `hyprctl`)
-- **KDE Plasma (KWin)** (via `qdbus` and `dbus-send`)
-- **GNOME** (via `gdbus`, requires the "Window Calls" extension)
+- **KDE Plasma (KWin)** (via `kdtool`)
 
 If all Wayland backends fail, or if `WAYLAND_DISPLAY` is not set, the library falls back to X11/XCB, maintaining full backward compatibility.
 

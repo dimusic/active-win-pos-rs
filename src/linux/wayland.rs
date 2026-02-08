@@ -84,8 +84,4 @@ fn try_kwin() -> Option<ActiveWindow> {
 
 pub fn get_active_window_wayland() -> Option<ActiveWindow> {
     try_kwin()
-    //try_sway()
-        //.or_else(try_hyprland)
-        //.or_else(try_kwin)
-        //.or_else(try_gnome)
 }
