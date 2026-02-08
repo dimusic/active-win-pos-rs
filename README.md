@@ -35,6 +35,12 @@ Or use ``` active_win_pos_rs::get_position ``` to get the ```WindowPosition``` o
 On MacOS ```title``` property will always return an empty string
 unless you [Enable Screen Recording permission](https://support.apple.com/en-ca/guide/mac-help/mchld6aa7d23/mac) for your app.
 
+### Wayland support on Linux
+On Linux, the library now supports both X11 and Wayland. When running on Wayland (detected via the `WAYLAND_DISPLAY` environment variable), the library will attempt to get the active window information from the following compositors, in order:
+- **KDE Plasma (KWin)** (via `kdtool`)
+
+If all Wayland backends fail, or if `WAYLAND_DISPLAY` is not set, the library falls back to X11/XCB, maintaining full backward compatibility.
+
 ## Build
 
 ```sh
