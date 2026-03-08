@@ -3,8 +3,8 @@ use std::fs::read_link;
 
 use xcb::{x, Xid};
 
-use crate::{common::platform_api::PlatformApi, ActiveWindow, WindowPosition};
 use super::wayland::get_active_window_wayland;
+use crate::{common::platform_api::PlatformApi, ActiveWindow, WindowPosition};
 
 fn get_xcb_window_pid(conn: &xcb::Connection, window: x::Window) -> xcb::Result<u32> {
     let window_pid = conn.send_request(&x::InternAtom {

@@ -622,7 +622,8 @@ dependencies = [
 [[package]]
 name = "kdotool"
 version = "0.2.2"
-source = "git+https://github.com/jinliu/kdotool#153b3fc4bf28d39e58227246699e8a96ac0c8bae"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "799b002da7851ae34b6bd3fd1530e18828fec1d0420c7e67e9575ca06504a734"
 dependencies = [
  "anyhow",
  "chrono",

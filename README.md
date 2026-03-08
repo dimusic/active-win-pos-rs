@@ -37,9 +37,24 @@ unless you [Enable Screen Recording permission](https://support.apple.com/en-ca/
 
 ### Wayland support on Linux
 On Linux, the library now supports both X11 and Wayland. When running on Wayland (detected via the `WAYLAND_DISPLAY` environment variable), the library will attempt to get the active window information from the following compositors, in order:
-- **KDE Plasma (KWin)** (via `kdtool`)
+- **KDE Plasma (KWin)** (via `kdotool`)
 
 If all Wayland backends fail, or if `WAYLAND_DISPLAY` is not set, the library falls back to X11/XCB, maintaining full backward compatibility.
+
+### Linux build dependencies
+To build on Linux, install these system packages first:
+
+- `libxcb-ewmh-dev`
+- `libxcb-randr0-dev`
+- `libdbus-1-dev`
+- `pkg-config`
+
+On Debian/Ubuntu:
+
+```sh
+sudo apt-get update
+sudo apt-get install -y libxcb-ewmh-dev libxcb-randr0-dev libdbus-1-dev pkg-config
+```
 
 ## Build
 
@@ -76,4 +91,3 @@ If you work with laser cutting, CNC, or digital art, you might find them useful 
 - **[MyLaserTools](https://mylasertools.com)** tools and resources for laser cutting, CNC machining, and 3D printing.
 - **[YXE Creations Craft Hub](https://yxecreations.com)** a laser craft supply store for acrylic, plywood, and maker materials.
 - **[Lumicry](https://lumicry.com)** digital luminous neon and acrylic art powered by LEDs and custom electronics.
-
