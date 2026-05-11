@@ -3,6 +3,8 @@
 extern crate objc;
 
 mod common;
+#[cfg(target_os = "freebsd")]
+mod freebsd;
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "macos")]
@@ -10,6 +12,8 @@ mod mac;
 #[cfg(target_os = "windows")]
 mod win;
 
+#[cfg(target_os = "freebsd")]
+use freebsd::init_platform_api;
 #[cfg(target_os = "linux")]
 use linux::init_platform_api;
 #[cfg(target_os = "macos")]
